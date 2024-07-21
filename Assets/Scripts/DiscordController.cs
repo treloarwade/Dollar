@@ -42,6 +42,33 @@ public class DiscordController : MonoBehaviour
             money.Play();
         }
     }
+    public void OnTwoDollarClicked()
+    {
+        // Increment the click count
+        clickCount += 2;
+        SaveClickCount();
+        // Update the counter text
+        counter.text = clickCount.ToString();
+        if (goldendollarclicked)
+        {
+            goldenmoney.Play();
+        }
+        else
+        {
+            money.Play();
+        }
+    }
+    public void OnNotADollarClicked()
+    {
+        counter.text = "This isn't a dollar";
+        StartCoroutine(ClickNotaDollar());
+    }
+    IEnumerator ClickNotaDollar()
+    {
+        yield return new WaitForSeconds(2f);
+        counter.text = "";
+        yield return null;
+    }
 
     private void SaveClickCount()
     {

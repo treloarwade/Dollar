@@ -18,7 +18,7 @@ public class MoveScreens : MonoBehaviour
     public void NextScreen()
     {
 
-        if (!isMoving && currentScreen < 4)
+        if (!isMoving && !inventoryManager.isSpinning && currentScreen < 4)
         {
             StartCoroutine(MoveToScreen(currentScreen + 1));
             inventoryManager.StopParticles();
@@ -27,7 +27,7 @@ public class MoveScreens : MonoBehaviour
 
     public void PreviousScreen()
     {
-        if (!isMoving && currentScreen > 1)
+        if (!isMoving && !inventoryManager.isSpinning && currentScreen > 1)
         {
             StartCoroutine(MoveToScreen(currentScreen - 1));
             inventoryManager.StopParticles();
