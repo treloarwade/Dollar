@@ -21,6 +21,7 @@ public class SteamInventoryManager : MonoBehaviour
     public Transform ItemContent;
     public GameObject InventoryItem;
     public GameObject SmallerInventoryItem;
+    public GameObject EvenSmallerInventoryItem;
     public GameObject InventoryScreen;
     public ItemDatabase itemDatabase;
     private Coroutine toggleCoroutine = null;
@@ -254,11 +255,11 @@ public class SteamInventoryManager : MonoBehaviour
     public void GenerateItem()
     {
         SteamInventoryResult_t inventoryResult;
-        SteamItemDef_t[] itemDefs = new SteamItemDef_t[116];
+        SteamItemDef_t[] itemDefs = new SteamItemDef_t[126];
         for (int i = 0; i < itemDefs.Length; i++)
         {
             // Initialize each element as needed
-            itemDefs[i] = new SteamItemDef_t(116);
+            itemDefs[i] = new SteamItemDef_t(126);
         }
         //bool success = SteamInventory.GenerateItems(out inventoryResult, itemDefs, null, 1);
         SteamInventory.GenerateItems(out inventoryResult, itemDefs, null, 1);
@@ -385,22 +386,46 @@ public class SteamInventoryManager : MonoBehaviour
 
     private void UpdateInventoryUI(Dictionary<int, int> itemCounts)
     {
-        // Determine whether to use the smaller item prefab
-        bool useSmallerItems = Items.Count > 8;
-        GameObject itemPrefab = useSmallerItems ? SmallerInventoryItem : InventoryItem;
+        // Determine which item prefab to use based on the number of items
+        GameObject itemPrefab;
+        if (Items.Count > 15)
+        {
+            itemPrefab = EvenSmallerInventoryItem;
+        }
+        else if (Items.Count > 8)
+        {
+            itemPrefab = SmallerInventoryItem;
+        }
+        else
+        {
+            itemPrefab = InventoryItem;
+        }
 
         // Set the cell size based on the item type
         GridLayoutGroup gridLayoutGroup = ItemContent.GetComponent<GridLayoutGroup>();
         if (gridLayoutGroup != null)
         {
-            gridLayoutGroup.cellSize = useSmallerItems ? new Vector2(150, 150) : new Vector2(200, 200);
+            if (Items.Count > 15)
+            {
+                gridLayoutGroup.cellSize = new Vector2(132, 132);
+            }
+            else if (Items.Count > 8)
+            {
+                gridLayoutGroup.cellSize = new Vector2(150, 150);
+            }
+            else
+            {
+                gridLayoutGroup.cellSize = new Vector2(200, 200);
+            }
         }
 
+        // Clear existing items
         foreach (Transform item in ItemContent)
         {
             Destroy(item.gameObject);
         }
 
+        // Populate the inventory UI with the current items
         foreach (var item in Items)
         {
             GameObject obj = Instantiate(itemPrefab, ItemContent);
@@ -426,19 +451,95 @@ public class SteamInventoryManager : MonoBehaviour
             itemIcon.sprite = item.Icon;
         }
     }
+    void Update()
+    {
+        if (isMoving)
+        {
+            // Update angle for circular motion
+            angle += speed * Time.deltaTime;
+
+            // Calculate new position
+            float x = Mathf.Cos(angle) * radius;
+            float y = Mathf.Sin(angle) * radius;
+            trailObject.transform.position = new Vector3(x, y, 0);
+        }
+    }
+    IEnumerator ColorChange (Color color)
+    {
+        float elapsedTime = 0f;
+        Color initialColor = maincamera.backgroundColor; // Store the initial color
+
+        while (elapsedTime < duration)
+        {
+            // Interpolate between the initial color and the target color
+            maincamera.backgroundColor = Color.Lerp(initialColor, color, elapsedTime / duration);
+
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait until the next frame
+        }
+        yield return null;
+    }
+    IEnumerator ColorChangeText(Color color)
+    {
+        if (counter == null) yield break; // Exit if counter is not assigned
+
+        Color initialColor = counter.color; // Store the initial color
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            // Interpolate between the initial color and the target color
+            counter.color = Color.Lerp(initialColor, color, elapsedTime / duration);
+
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait until the next frame
+        }
+
+        // Ensure the final color is set
+        counter.color = color;
+    }
+    public void StartMovement()
+    {
+        StartCoroutine(ColorChange(Color.black));
+        StartCoroutine(ColorChangeText(Color.white));
+
+        isMoving = true;
+        trailRenderer.enabled = true; // Enable the trail when starting movement
+    }
+
+    public void StopMovement()
+    {
+        StartCoroutine(ColorChange(normalColor));
+        StartCoroutine(ColorChangeText(normalTextColor));
+        isMoving = false;
+        trailRenderer.enabled = false; // Disable the trail when stopping movement
+    }
+    public float duration = 2.0f;
+    public Color normalTextColor = new Color(50f / 255f, 50f / 255f, 50f / 255f);
+    public Color normalColor = new Color(155f / 255f, 221f / 255f, 255f / 255f); // Background color
     public GameObject normalbutton;
     public GameObject briefcase;
+    public GameObject goldenbriefcase;
     public GameObject twodollar;
     public GameObject notadollar;
     public Text counter;
+    public GameObject trailObject;
+    public TrailRenderer trailRenderer;
+    public float radius = 3.0f; // Radius of the circular motion
+    public float speed = 5.0f; // Speed of the circular motion
+    public Camera maincamera;
+
+    private bool isMoving = false; // Flag to control movement
+    private float angle = 0f; // Current angle in radians
     private void OnInventoryItemClick(int itemId)
     {
         // Initially hide both buttons
         normalbutton.SetActive(false);
         briefcase.SetActive(false);
+        goldenbriefcase.SetActive(false);
         twodollar.SetActive(false);
         notadollar.SetActive(false);
-
+        StopMovement();
         sparkle.Stop();
         confetti.Stop();
         silversparkle.Stop();
@@ -513,6 +614,7 @@ public class SteamInventoryManager : MonoBehaviour
                 normalbutton.SetActive(true);
                 ChangeMaterial(3);
                 ChangeSprite(109);
+                StartMovement();
                 break;
             case 110:
                 // Handle item ID 110 logic
@@ -552,6 +654,15 @@ public class SteamInventoryManager : MonoBehaviour
             case 116:
                 // Handle item ID 116 logic
                 briefcase.SetActive(true);
+                counter.text = "";
+                break;
+            case 126:
+                // Handle item ID 116 logic
+                goldenbriefcase.SetActive(true);
+                if (moveScreens.currentScreen == 2)
+                {
+                    sparkle.Play();
+                }
                 counter.text = "";
                 break;
             default:
@@ -707,6 +818,7 @@ public class SteamInventoryManager : MonoBehaviour
         StartCoroutine(ExchangingCooldown());
         // Use minimal setup for testing
         List<SteamItemInstanceID_t> inputItems = GetItemIdsFromInventory(new SteamItemDef_t(116), 1);
+        lootboxType = 1;
         if (inputItems.Count < 1)
         {
             Debug.LogError("Not enough items found in inventory for exchange.");
@@ -723,6 +835,53 @@ public class SteamInventoryManager : MonoBehaviour
 
         SteamItemDef_t[] outputItems = new SteamItemDef_t[1];
         outputItems[0] = new SteamItemDef_t(12);
+        uint[] outputQuantity = new uint[1];
+        outputQuantity[0] = 1;
+
+        SteamInventoryResult_t resultHandle;
+        bool success = SteamInventory.ExchangeItems(out resultHandle, outputItems, outputQuantity, (uint)outputItems.Length, inputItems.ToArray(), inputQuantities, (uint)inputItems.Count);
+
+        if (success)
+        {
+            if (resultHandle != SteamInventoryResult_t.Invalid)
+            {
+                Debug.Log("Exchange request successful, waiting for callback...");
+                Debug.Log($"Result handle: {resultHandle}");
+            }
+            else
+            {
+                Debug.LogError("Invalid result handle received from exchange request.");
+            }
+        }
+        else
+        {
+            Debug.LogError("Exchange request failed");
+        }
+    }
+    public int lootboxType;
+    public void SimpleExchangeTest2()
+    {
+        Debug.Log("Attempting simple exchange");
+        StartCoroutine(ExchangingCooldown());
+        // Use minimal setup for testing
+        List<SteamItemInstanceID_t> inputItems = GetItemIdsFromInventory(new SteamItemDef_t(126), 1);
+        lootboxType = 2;
+        if (inputItems.Count < 1)
+        {
+            Debug.LogError("Not enough items found in inventory for exchange.");
+            inventoryText.text = "Out of briefcases";
+            StartCoroutine(HideText());
+            return;
+        }
+
+        uint[] inputQuantities = new uint[inputItems.Count];
+        for (int i = 0; i < inputItems.Count; i++)
+        {
+            inputQuantities[i] = 1;
+        }
+
+        SteamItemDef_t[] outputItems = new SteamItemDef_t[1];
+        outputItems[0] = new SteamItemDef_t(13);
         uint[] outputQuantity = new uint[1];
         outputQuantity[0] = 1;
 
@@ -847,8 +1006,11 @@ public class SteamInventoryManager : MonoBehaviour
     public HorizontalLayoutGroup itemGrid;
     public Item[] items;
     public GameObject itemPrefab;
-    private List<int> itemIDs = new List<int> { 100, 101, 102, 103, 104, 105, 106, 109, 110, 111, 112, 116 };
+    private List<int> itemIDs1 = new List<int> { 100, 101, 102, 103, 104, 105, 106, 109, 110, 111, 112, 116 };
+    private List<int> itemIDs2 = new List<int> { 101, 104, 105, 106, 110, 117, 118, 119, 120, 121, 126 };
     public GameObject spinningBar;
+    public ParticleSystem golddollars;
+    public ParticleSystem silverdollars;
 
 
     public string mostrecentitemname;
@@ -858,9 +1020,18 @@ public class SteamInventoryManager : MonoBehaviour
         isSpinning = true;
         // Populate the grid with items
         int selectedIndex = Random.Range(15, 26); // Ensure the selected item lands between positions 15 and 25
+        if (lootboxType == 1)
+        {
+            List<int> randomItems = GenerateRandomItemList((int)item.m_iDefinition, 30, selectedIndex, itemIDs1);
+            PopulateGridWithItems(randomItems);
+        }
+        else
+        {
+            List<int> randomItems = GenerateRandomItemList((int)item.m_iDefinition, 30, selectedIndex, itemIDs2);
+            PopulateGridWithItems(randomItems);
+        }
 
-        List<int> randomItems = GenerateRandomItemList((int)item.m_iDefinition, 30, selectedIndex);
-        PopulateGridWithItems(randomItems);
+
         float elapsedTime = 0f;
         Vector3 restingPosition = new Vector3(0, -10000, 0);
         Vector3 startPosition = new Vector3 (0, -300, 0);
@@ -910,7 +1081,17 @@ public class SteamInventoryManager : MonoBehaviour
 
         // Start the cooldown countdown
         inventoryText.text = "Received a " + newItem.Name;
-        money2.Play();
+        if (lootboxType == 2)
+        {
+            golddollars.Play();
+            silverdollars.Play();
+        }
+        else
+        {
+            money2.Play();
+
+        }
+
         mostrecentitemname = newItem.Name;
         // Reset the spinner position for the next use
         yield return new WaitForSeconds(2.5f);
@@ -993,10 +1174,9 @@ public class SteamInventoryManager : MonoBehaviour
 
 
 
-    private List<int> GenerateRandomItemList(int targetItemID, int totalItems, int targetIndex)
+    private List<int> GenerateRandomItemList(int targetItemID, int totalItems, int targetIndex, List<int> possibleIDs)
     {
         List<int> itemList = new List<int>();
-        int[] possibleIDs = { 100, 101, 102, 103, 104, 105, 106, 109, 110, 111, 112, 116 };
         System.Random rand = new System.Random();
 
         for (int i = 0; i < totalItems; i++)
@@ -1007,7 +1187,7 @@ public class SteamInventoryManager : MonoBehaviour
             }
             else
             {
-                itemList.Add(possibleIDs[rand.Next(0, possibleIDs.Length)]);
+                itemList.Add(possibleIDs[rand.Next(0, possibleIDs.Count)]);
             }
         }
 
