@@ -9,6 +9,7 @@ public class BezierMovementWithSpin : MonoBehaviour
     public float maxWaitTime = 480000f;
     public float animationDuration = 5f; // Duration of the animation
     public float spinSpeed = 60f; // Degrees per second
+    public NewBehaviourScript newBehaviourScript;
 
     private void Start()
     {
@@ -22,6 +23,19 @@ public class BezierMovementWithSpin : MonoBehaviour
         yield return new WaitForSeconds(waitTime);
 
         // Define start and end positions with random y coordinates
+        Vector2 startPos = new Vector2(600f, Random.Range(-300f, 300f));
+        Vector2 endPos = new Vector2(-600f, Random.Range(-300f, 300f));
+        Vector2 controlPoint = new Vector2(Random.Range(-600f, 600f), Random.Range(-300f, 300f)); // Random control point
+
+        yield return StartCoroutine(MoveAlongBezierCurveWithSpin(startPos, endPos, controlPoint, animationDuration));
+    }
+    public void MoveNow()
+    {
+        Debug.Log("Doing the function");
+        StartCoroutine(TriggerMoveNow());
+    }
+    private IEnumerator TriggerMoveNow()
+    {
         Vector2 startPos = new Vector2(600f, Random.Range(-300f, 300f));
         Vector2 endPos = new Vector2(-600f, Random.Range(-300f, 300f));
         Vector2 controlPoint = new Vector2(Random.Range(-600f, 600f), Random.Range(-300f, 300f)); // Random control point
