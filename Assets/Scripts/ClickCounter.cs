@@ -19,6 +19,10 @@ public class ClickCounter : MonoBehaviour
     public SteamInventoryManager inventoryManager;
     public void OnMouseDown()
     {
+        Dollarclick();
+    }
+    private void Dollarclick()
+    {
         if (!clickenabled)
         {
             return;
@@ -30,22 +34,37 @@ public class ClickCounter : MonoBehaviour
         switch (dollartype)
         {
             case 100:
-                controller.OnDollarClicked();
+                controller.OnDollarClicked(1);
+                break;
+            case 102:
+                controller.OnDollarClicked(100);
+                break;
+            case 103:
+                controller.OnDollarClicked(1000);
+                break;
+            case 104:
+                controller.OnDollarClicked(10000);
+                break;
+            case 105:
+                controller.OnDollarClicked(100000);
+                break;
+            case 106:
+                controller.OnDollarClicked(1000000);
                 break;
             case 108:
-                controller.OnFrutigerClicked();
+                controller.OnFrutigerClicked(1);
                 break;
             case 111:
                 controller.OnNotADollarClicked();
                 break;
             case 122:
-                controller.OnDiamondDollarClicked();
+                controller.OnDiamondDollarClicked(1);
                 break;
             case 123:
-                controller.OnDiamondDollarClicked();
+                controller.OnDiamondDollarClicked(1);
                 break;
             default:
-                controller.OnDollarClicked();
+                controller.OnDollarClicked(1);
                 break;
         }
     }

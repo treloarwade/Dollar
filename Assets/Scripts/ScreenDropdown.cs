@@ -1,3 +1,4 @@
+using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,7 +42,9 @@ public class ScreenDropdown : MonoBehaviour
     public GameObject blocker;
     public void OpenAPIKeyPage()
     {
-        Application.OpenURL("https://steamcommunity.com/dev/apikey");
+        //Application.OpenURL("https://steamcommunity.com/dev/apikey");
+        SteamFriends.ActivateGameOverlayToWebPage("https://steamcommunity.com/dev/apikey");
+
     }
     private void ShowScreen(int index)
     {

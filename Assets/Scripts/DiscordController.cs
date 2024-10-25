@@ -38,6 +38,21 @@ public class DiscordController : MonoBehaviour
     public bool particletoggleon;
     private Coroutine moneyCoroutine; // Reference to the running coroutine
     private bool isCoroutineRunning = false; // Tracks the state of the coroutine
+    public bool isAutumn = false;  // Flag to indicate if it's autumn or not
+    public GameObject moneyTree1;   // Reference to the Money Tree GameObject
+    public GameObject moneyTree2;   // Reference to the Money Tree GameObject
+    private Sprite fallTreeSprite; // Sprite for autumn (fall)
+    private Sprite treeSprite;     // Sprite for non-autumn (regular tree)
+    public ParticleSystem leaves1;
+    public ParticleSystem leaves2;
+    public ParticleSystem leaves3;
+    public ParticleSystem money2;
+    public ParticleSystem autumnleaves1;
+    public ParticleSystem autumnleaves2;
+    public ParticleSystem autumnleaves3;
+    public ParticleSystem autumnleaves4;
+
+
 
     void Start()
     {
@@ -45,8 +60,11 @@ public class DiscordController : MonoBehaviour
         atmLevel = LoadLevel("ATM");
         walletLevel = LoadLevel("Wallet");
         cowLevel = LoadLevel("Cow");
+        treeLevel = LoadLevel("Tree");
+        mineLevel = LoadLevel("Mine");
         UpdateLevelCostText();
         UpdateMoneyToAdd();
+        CheckAndRemoveLockedIcons();
         try
         {
             discord = new Discord.Discord(clientId, (ulong)Discord.CreateFlags.NoRequireDiscord);
@@ -66,60 +84,118 @@ public class DiscordController : MonoBehaviour
             particletoggleon = particletoggle.isOn; // Set toggleValue to true if toggle is checked
             particletoggle.onValueChanged.AddListener(OnToggleChanged);
         }
+        // Load the tree and fall tree sprites from the Resources folder
+        fallTreeSprite = Resources.Load<Sprite>("falltree");
+        treeSprite = Resources.Load<Sprite>("tree");
+
+        // Set the initial sprite based on the autumn flag
+        UpdateMoneyTreeSprite();
     }
-    public void OnDollarClicked()
+    public void SetAutumn(bool autumn)
     {
-        // Increment the click count
-        switch (dollartype)
+        isAutumn = autumn;
+        UpdateMoneyTreeSprite();  // Update the sprite whenever autumn state changes
+        if (leaves1.isPlaying)
         {
-            case 100:
-                clickCount++;
-                break;
-            case 102:
-                clickCount += 100;
-                break;
-            case 103:
-                clickCount += 1000;
-                break;
-            case 104:
-                clickCount += 10000;
-                break;
-            case 105:
-                clickCount += 100000;
-                break;
-            case 106:
-                clickCount += 1000000;
-                break;
-            case 112:
-                clickCount += 2;
-                break;
-            default:
-                clickCount++;
-                break;
-        }
-        SaveClickCount();
-        // Update the counter text
-        // Using "F0" format to display the number as a long number without decimal places
-        if (clickCount >= 1_000_000_000_000_000)
-        {
-            counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
-        }
-        else
-        {
-            counter.text = clickCount.ToString(); // Display with thousands separator
-        }
-        if (particletoggleon)
-        {
-            if (goldendollarclicked)
+            if (autumn)
             {
-                goldenmoney.Play();
+                leaves1.Stop();
+                leaves2.Stop();
+                leaves3.Stop();
+            }
+        }
+        if (autumnleaves1.isPlaying)
+        {
+            if(!autumn)
+            {
+                leaves1.Play();
+                leaves2.Play();
+                leaves3.Play();
+            }
+        }
+    }
+    public void ToggleTree()
+    {
+        if (treeLevel > 0)
+        {
+            moneyTree1.SetActive(!moneyTree1.activeSelf);
+            if (moneyTree1.activeSelf)
+            {
+                if (isAutumn)
+                {
+                    leaves1.Stop();
+                    leaves2.Stop();
+                    leaves3.Stop();
+                    money2.Play();
+                }
+                else
+                {
+                    leaves1.Play();
+                    leaves2.Play();
+                    leaves3.Play();
+                    money2.Play();
+                }
+            }
+        }
+    }
+    public void ToggleATM()
+    {
+        if (atmLevel > 0)
+        {
+            upgradeMenu.ToggleAtmPhysicsItem();
+        }
+    }
+    public void ToggleCow()
+    {
+        if (cowLevel > 0)
+        {
+            upgradeMenu.ToggleCowPhysicsItem();
+        }
+    }
+    public void ToggleMinecart()
+    {
+        if (mineLevel > 0)
+        {
+            upgradeMenu.ToggleMinecartPhysicsItem();
+        }
+    }
+    // Function to update the Money Tree sprite based on the autumn flag
+    private void UpdateMoneyTreeSprite()
+    {
+        if (moneyTree1 != null)
+        {
+            SpriteRenderer spriteRenderer = moneyTree1.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                // If it's autumn, change to falltree sprite, otherwise use the regular tree sprite
+                spriteRenderer.sprite = isAutumn ? fallTreeSprite : treeSprite;
             }
             else
             {
-                money.Play();
+                Debug.LogError("No SpriteRenderer found on the moneyTree GameObject.");
             }
         }
-
+        else
+        {
+            Debug.LogError("MoneyTree GameObject is not assigned.");
+        }
+        if (moneyTree2 != null)
+        {
+            Image spriteRenderer = moneyTree2.GetComponent<Image>();
+            if (spriteRenderer != null)
+            {
+                // If it's autumn, change to falltree sprite, otherwise use the regular tree sprite
+                spriteRenderer.sprite = isAutumn ? fallTreeSprite : treeSprite;
+            }
+            else
+            {
+                Debug.LogError("No SpriteRenderer found on the moneyTree GameObject.");
+            }
+        }
+        else
+        {
+            Debug.LogError("MoneyTree GameObject is not assigned.");
+        }
     }
     public void ToggleMoneyCoroutine()
     {
@@ -148,112 +224,253 @@ public class DiscordController : MonoBehaviour
         switch (dollartype)
         {
             case 100:
-                OnDollarClicked();
+                OnDollarClicked(1); // Increment by 1
+                break;
+            case 102:
+                OnDollarClicked(100); // Increment by 100
+                break;
+            case 103:
+                OnDollarClicked(1000); // Increment by 1000
+                break;
+            case 104:
+                OnDollarClicked(10000); // Increment by 10000
+                break;
+            case 105:
+                OnDollarClicked(100000); // Increment by 100000
+                break;
+            case 106:
+                OnDollarClicked(1000000); // Increment by 1000000
                 break;
             case 108:
-                OnFrutigerClicked();
+                OnFrutigerClicked(1);
                 break;
             case 111:
                 OnNotADollarClicked();
                 break;
             case 122:
-                OnDiamondDollarClicked();
+                OnDiamondDollarClicked(1);
                 break;
             case 123:
-                OnDiamondDollarClicked();
+                OnDiamondDollarClicked(1);
                 break;
             default:
-                OnDollarClicked();
+                OnDollarClicked(1);
                 break;
         }
+    }
+    public void ClickWithNoIncome()
+    {
+        switch (dollartype)
+        {
+            case 100:
+                OnDollarClicked(0); // Increment by 1
+                break;
+            case 102:
+                OnDollarClicked(0); // Increment by 100
+                break;
+            case 103:
+                OnDollarClicked(0); // Increment by 1000
+                break;
+            case 104:
+                OnDollarClicked(0); // Increment by 10000
+                break;
+            case 105:
+                OnDollarClicked(0); // Increment by 100000
+                break;
+            case 106:
+                OnDollarClicked(0); // Increment by 1000000
+                break;
+            case 108:
+                OnFrutigerClicked(0);
+                break;
+            case 122:
+                OnDiamondDollarClicked(0);
+                break;
+            case 123:
+                OnDiamondDollarClicked(0);
+                break;
+            default:
+                OnDollarClicked(0);
+                break;
+        }
+    }
+    public void OnDollarClicked(int incrementAmount)
+    {
+        // Increment click count by the provided amount
+        clickCount += incrementAmount;
+
+        SaveClickCount();
+        // Update the counter text
+        // Using "F0" format to display the number as a long number without decimal places
+        if (clickCount >= 1_000_000_000_000_000)
+        {
+            counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
+        }
+        else
+        {
+            counter.text = clickCount.ToString(); // Display with thousands separator
+        }
+        if (particletoggleon)
+        {
+            if (goldendollarclicked)
+            {
+                goldenmoney.Play();
+            }
+            else
+            {
+                money.Play();
+            }
+        }
+
     }
     public float moveDuration = 2f; // Initial move duration
     public int atmLevel = 0; // Starting level
     public int walletLevel = 0; // Starting level
     public int cowLevel = 0; // Starting level
-    public Text leveltext;
-    public Text walletleveltext;
-    public Text cowleveltext;
+    public int treeLevel = 0; // Starting level
+    public int mineLevel = 0; // Starting level
 
-    public long moneyToAdd = 0; // Adjust this value as needed
-    public long moneyFromATM = 0;
-    public long moneyFromWallet = 0;
-    public long moneyFromCow = 0;
-    public Text costText;
+    public Text atmLevelText;
+    public Text walletLevelText;
+    public Text cowLevelText;
+    public Text treeLevelText;
+    public Text mineLevelText;
+
+    public Text atmCostText;
     public Text walletCostText;
     public Text cowCostText;
+    public Text treeCostText;
+    public Text mineCostText;
+
+    public BigDouble moneyToAdd = 0; // Adjust this value as needed
+    public BigDouble moneyFromATM = 0;
+    public BigDouble moneyFromWallet = 0;
+    public BigDouble moneyFromCow = 0;
+    public BigDouble moneyFromTree = 0;
+    public BigDouble moneyFromMine = 0;
+
     private IEnumerator AddMoneyOverTime()
     {
         while (true)
         {
-            // Check if moneyToAdd is zero to avoid division by zero
-            if (moneyToAdd <= 0)
-            {
-                yield return null; // Do nothing and wait for the next frame
-                continue;
-            }
+            // Add the calculated amount to clickCount
+            clickCount += moneyToAdd;
 
-            // Determine how often to add money
-            // Ensure a minimum delay to prevent too frequent updates
-            float timeDelay = Mathf.Max(0.1f, 1f / moneyToAdd);
-
-            // Add money at each interval; ensure it's a whole number
-            double moneyToAddThisInterval = Mathf.RoundToInt(moneyToAdd * timeDelay);
-
-            // If rounding leads to zero, ensure at least 1 unit is added
-            if (moneyToAddThisInterval < 1)
-            {
-                moneyToAddThisInterval = 1;
-            }
-
-            // Add money according to the calculated amount
-            clickCount += moneyToAddThisInterval;
-
-            // Update the counter display
-            if (clickCount >= 1_000_000_000_000_000)
+            // Update the counter display with appropriate formatting
+            if (clickCount >= 1_000_000_000_000_000) // Greater than or equal to a quadrillion
             {
                 counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
             }
             else
             {
-                counter.text = clickCount.ToString(); // Display with thousands separator
+                // Use ToString("N0") for thousands separator
+                counter.text = clickCount.ToString();
             }
-            ClickDollar();
-            // Wait based on the calculated time delay
-            yield return new WaitForSeconds(timeDelay);
+
+            ClickWithNoIncome(); // Call your existing function to process the click
+            yield return new WaitForSeconds(0.5f); // Wait based on the calculated time delay
+        }
+    }
+    public GameObject atmLockedIcon;   // Assign the ATM locked icon in the Inspector
+    public GameObject walletLockedIcon; // Assign the Wallet locked icon in the Inspector
+    public GameObject cowLockedIcon;    // Assign the Cow locked icon in the Inspector
+    public GameObject treeLockedIcon;    // Assign the Cow locked icon in the Inspector
+    public GameObject mineLockedIcon;    // Assign the Cow locked icon in the Inspector
+
+
+    // Call this function to check and remove locked icons based on level
+    public void CheckAndRemoveLockedIcons()
+    {
+        if (atmLevel > 0 && atmLockedIcon != null)
+        {
+            atmLockedIcon.SetActive(false);  // Disable ATM locked icon if level is greater than 0
+        }
+
+        if (walletLevel > 0 && walletLockedIcon != null)
+        {
+            walletLockedIcon.SetActive(false);  // Disable Wallet locked icon if level is greater than 0
+        }
+
+        if (cowLevel > 0 && cowLockedIcon != null)
+        {
+            cowLockedIcon.SetActive(false);  // Disable Cow locked icon if level is greater than 0
+        }
+
+        if (treeLevel > 0 && treeLockedIcon != null)
+        {
+            treeLockedIcon.SetActive(false);  // Disable Cow locked icon if level is greater than 0
+        }
+        if (mineLevel > 0 && mineLockedIcon != null)
+        {
+            mineLockedIcon.SetActive(false);  // Disable Cow locked icon if level is greater than 0
         }
     }
     private void UpdateMoneyToAdd()
     {
         moneyFromATM = CalculateMoney(atmLevel);
-        moneyFromWallet = 5 * CalculateMoney(walletLevel);
-        moneyFromCow = 10 * CalculateMoney(cowLevel);
-        moneyToAdd = moneyFromATM + moneyFromWallet + moneyFromCow;
+        moneyFromWallet = 3 * CalculateMoney(walletLevel);
+        moneyFromCow = 8 * CalculateMoney(cowLevel);
+        moneyFromTree = 20 * CalculateMoney(treeLevel);
+        moneyFromMine = 38 * CalculateMoney(mineLevel);
+        moneyToAdd = moneyFromATM + moneyFromWallet + moneyFromCow + moneyFromTree + moneyFromMine;
     }
     public void UpdateLevelCostText()
     {
-        double cost1 = GetLevelUpCost(atmLevel + 1);
-        costText.text = "Cost: " + cost1.ToString();
-        double cost2 = 100 * GetLevelUpCost(cowLevel + 1);
-        cowCostText.text = "Cost: " + cost2.ToString();
-        double cost3 = 50 * GetLevelUpCost(walletLevel + 1);
-        walletCostText.text = "Cost: " + cost3.ToString();
-        leveltext.text = "Level: " + atmLevel;
-        walletleveltext.text = "Level: " + walletLevel;
-        cowleveltext.text = "Level: " + cowLevel;
+        BigDouble cost1 = 10 * GetLevelUpCost(atmLevel + 1);
+        atmCostText.text = FormatCostText(cost1);
+        BigDouble cost2 = 3000 * GetLevelUpCost(cowLevel + 1);
+        cowCostText.text = FormatCostText(cost2);
+        BigDouble cost3 = 200 * GetLevelUpCost(walletLevel + 1);
+        walletCostText.text = FormatCostText(cost3);
+        BigDouble cost4 = 40000 * GetLevelUpCost(treeLevel + 1);
+        treeCostText.text = FormatCostText(cost4);
+        BigDouble cost5 = 500000 * GetLevelUpCost(mineLevel + 1);
+        mineCostText.text = FormatCostText(cost5);
+        // For ATM Level text
+        atmLevelText.text = atmLevel == 0 ? "Unlock" : "Level: " + atmLevel;
+
+        // For Wallet Level text
+        walletLevelText.text = walletLevel == 0 ? "Unlock" : "Level: " + walletLevel;
+
+        // For Cow Level text
+        cowLevelText.text = cowLevel == 0 ? "Unlock" : "Level: " + cowLevel;
+
+        treeLevelText.text = treeLevel == 0 ? "Unlock" : "Level: " + treeLevel;
+        mineLevelText.text = mineLevel == 0 ? "Unlock" : "Level: " + mineLevel;
+
+    }
+    private string FormatCostText(BigDouble cost)
+    {
+        if (cost >= 1_000_000_000_000_000)
+        {
+            return "Cost: " + (cost / 1_000_000f).ToString("F0") + " million";
+        }
+        else
+        {
+            return "Cost: " + cost.ToString();
+        }
     }
     public void ResetLevels()
     {
         atmLevel = 0;
         walletLevel = 0;
         cowLevel = 0;
+        treeLevel = 0;
+        mineLevel = 0;
+        atmLockedIcon.SetActive(true);  // Disable ATM locked icon if level is greater than 0
+        walletLockedIcon.SetActive(true);  // Disable Wallet locked icon if level is greater than 0
+        cowLockedIcon.SetActive(true);  // Disable Cow locked icon if level is greater than 0
+        treeLockedIcon.SetActive(true);
+        mineLockedIcon.SetActive(true);
         UpdateMoneyToAdd();
-        UpdateLevelCostText();
         SaveLevel("ATM", atmLevel);
         SaveLevel("Wallet", walletLevel);
         SaveLevel("Cow", cowLevel);
+        SaveLevel("Tree", treeLevel);
+        SaveLevel("Mine", mineLevel);
+        UpdateLevelCostText();
     }
-    private int CalculateMoney(int level)
+    private BigDouble CalculateMoney(int level)
     {
         // Ensure level is at least 1
         if (level == 0)
@@ -261,9 +478,14 @@ public class DiscordController : MonoBehaviour
             return 0;
         }
 
-        // Use the formula 2^(level - 1)
-        return (int)Math.Pow(2, level - 1);
+        // Use controlled exponential growth (e.g., base 1.5)
+        // Round up the result to the next whole number using Math.Ceiling
+        return (BigDouble)Math.Ceiling(Math.Pow(1.4, level - 1));  // Change the base (e.g., 1.5) to your preference
     }
+
+
+
+
 
 
     private IEnumerator RepeatFunctionCoroutine()
@@ -284,161 +506,85 @@ public class DiscordController : MonoBehaviour
 
     public int LoadLevel(string itemName)
     {
-        return PlayerPrefs.GetInt(itemName + "_Level", 1);  // Default to level 1 if no data exists.
+        return PlayerPrefs.GetInt(itemName + "_Level", 0);  // Default to level 1 if no data exists.
     }
 
-    public void LevelUp()
+    public void LevelUp(ref int level, string levelName, BigDouble costMultiplier, Text levelText, Text costText)
     {
-        if (atmLevel < 100)
+        if (level < 100)
         {
-            double cost = GetLevelUpCost(atmLevel + 1); // Get the cost for the next level
-
-
+            BigDouble cost = costMultiplier * GetLevelUpCost(level + 1); // Get the cost for the next level
 
             if (clickCount >= cost)
             {
                 clickCount -= cost;
-                if (clickCount >= 1_000_000_000_000_000)
-                {
-                    counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
-                }
-                else
-                {
-                    counter.text = clickCount.ToString(); // Display with thousands separator
-                }
+                UpdateCounter();
 
-                atmLevel++;
-                SaveLevel("ATM", atmLevel);
-                Debug.Log($"Leveled up to {atmLevel}. New move duration: {moneyFromATM}. Clicks remaining: {clickCount}");
-                leveltext.text = "Level: " + atmLevel;
+                level++;
+                SaveLevel(levelName, level);
+                Debug.Log($"Leveled up to {level}. Clicks remaining: {clickCount}");
+                levelText.text = "Level: " + level;
                 UpdateMoneyToAdd();
             }
             else
             {
                 Debug.Log("Not enough clicks to level up.");
             }
-
         }
         else
         {
             Debug.Log("Maximum level reached.");
         }
-        double cost2 = GetLevelUpCost(atmLevel + 1);
-        if (cost2 >= 1_000_000_000_000_000)
+
+        UpdateLevelCostText();
+        CheckAndRemoveLockedIcons();
+    }
+    // Function to update the counter display
+    private void UpdateCounter()
+    {
+        if (clickCount >= 1_000_000_000_000_000)
         {
             counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
         }
         else
         {
-            costText.text = "Cost: " + cost2.ToString();
+            counter.text = clickCount.ToString();
         }
-
     }
+
+    // Example usage for specific levels
+    public void LevelUpATM()
+    {
+        LevelUp(ref atmLevel, "ATM", 10, atmLevelText, atmCostText);
+    }
+
     public void LevelUpWallet()
     {
-        if (walletLevel < 100)
-        {
-            double cost = 50 * GetLevelUpCost(walletLevel + 1); // Get the cost for the next level
-
-
-
-            if (clickCount >= cost)
-            {
-                clickCount -= cost;
-                if (clickCount >= 1_000_000_000_000_000)
-                {
-                    counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
-                }
-                else
-                {
-                    counter.text = clickCount.ToString(); // Display with thousands separator
-                }
-
-                walletLevel++;
-                SaveLevel("Wallet", walletLevel);
-                Debug.Log($"Leveled up to {walletLevel}. New move duration: {moneyFromWallet}. Clicks remaining: {clickCount}");
-                walletleveltext.text = "Level: " + walletLevel;
-                UpdateMoneyToAdd();
-            }
-            else
-            {
-                Debug.Log("Not enough clicks to level up.");
-            }
-
-        }
-        else
-        {
-            Debug.Log("Maximum level reached.");
-        }
-        double cost2 = 50 * GetLevelUpCost(walletLevel + 1);
-        if (cost2 >= 1_000_000_000_000_000)
-        {
-            counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
-        }
-        else
-        {
-            walletCostText.text = "Cost: " + cost2.ToString();
-        }
-
+        LevelUp(ref walletLevel, "Wallet", 200, walletLevelText, walletCostText);
     }
+
     public void LevelUpCow()
     {
-        if (cowLevel < 100)
-        {
-            double cost = 100 * GetLevelUpCost(cowLevel + 1); // Get the cost for the next level
-
-
-
-            if (clickCount >= cost)
-            {
-                clickCount -= cost;
-                if (clickCount >= 1_000_000_000_000_000)
-                {
-                    counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
-                }
-                else
-                {
-                    counter.text = clickCount.ToString(); // Display with thousands separator
-                }
-
-                cowLevel++;
-                SaveLevel("Cow", cowLevel);
-                Debug.Log($"Leveled up to {cowLevel}. New move duration: {moneyFromCow}. Clicks remaining: {clickCount}");
-                cowleveltext.text = "Level: " + cowLevel;
-                UpdateMoneyToAdd();
-            }
-            else
-            {
-                Debug.Log("Not enough clicks to level up.");
-            }
-
-        }
-        else
-        {
-            Debug.Log("Maximum level reached.");
-        }
-        double cost2 = 100 * GetLevelUpCost(cowLevel + 1);
-
-        if (cost2 >= 1_000_000_000_000_000)
-        {
-            counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
-        }
-        else
-        {
-            cowCostText.text = "Cost: " + cost2.ToString();
-        }
-
+        LevelUp(ref cowLevel, "Cow", 3000, cowLevelText, cowCostText);
     }
-
-    private float GetLevelUpCost(int targetLevel)
+    public void LevelUpTree()
     {
-        // Define the cost progression
-        if (targetLevel < 2) return 0;
-        return Mathf.Pow(5, targetLevel - 2);
-
-
+        LevelUp(ref treeLevel, "Tree", 40000, treeLevelText, treeCostText);
     }
-    // Function to toggle the coroutine
+    public void LevelUpMine()
+    {
+        LevelUp(ref mineLevel, "Mine", 500000, mineLevelText, mineCostText);
+    }
+
+    private BigDouble GetLevelUpCost(BigDouble targetLevel)
+    {
+        // Define initial base cost and growth factor using BigDouble
+        BigDouble baseCost = 10;    // Initial cost for level 2
+        BigDouble growthFactor = 1.5;  // Increase cost by 50% per level
+
+        // Dynamic cost calculation: baseCost * (growthFactor ^ (targetLevel - 1))
+        return BigDouble.Floor(baseCost * BigDouble.Pow(growthFactor, targetLevel - 1));
+    }
     public void ToggleRepeatingFunction()
     {
         if (isRepeating)
@@ -474,15 +620,11 @@ public class DiscordController : MonoBehaviour
             }
         }
     }
-    public void OnTwoDollarClicked()
+    public void OnTwoDollarClicked(int incrementAmount)
     {
         // Increment the click count
-        clickCount += 2;
+        clickCount += incrementAmount;
         SaveClickCount();
-        if (clickCount > 9999999999999999)
-        {
-            clickCount = 0;
-        }
         // Update the counter text
         // Using "F0" format to display the number as a long number without decimal places
         if (clickCount >= 1_000_000_000_000_000)
@@ -507,15 +649,11 @@ public class DiscordController : MonoBehaviour
     public ParticleSystem fish3;
     public ParticleSystem diamond1;
     public ParticleSystem diamond2;
-    public void OnDiamondDollarClicked()
+    public void OnDiamondDollarClicked(int incrementAmount)
     {
         // Increment the click count
-        clickCount++;
+        clickCount += incrementAmount;
         SaveClickCount();
-        if (clickCount > 9999999999999999)
-        {
-            clickCount = 0;
-        }
         // Update the counter text
         // Using "F0" format to display the number as a long number without decimal places
         if (clickCount >= 1_000_000_000_000_000)
@@ -534,15 +672,11 @@ public class DiscordController : MonoBehaviour
 
 
     }
-    public void OnFrutigerClicked()
+    public void OnFrutigerClicked(int incrementAmount)
     {
-        // Increment the click count
-        clickCount++;
+        clickCount += incrementAmount;
+
         SaveClickCount();
-        if (clickCount > 9999999999999999)
-        {
-            clickCount = 0;
-        }
         // Update the counter text
         // Using "F0" format to display the number as a long number without decimal places
         if (clickCount >= 1_000_000_000_000_000)
@@ -692,6 +826,9 @@ public class DiscordController : MonoBehaviour
     }
     private bool briefcaseclicked = false;
     private bool goldenbriefcaseclicked = false;
+    private bool diamondbriefcaseclicked = false;
+    private bool pumpkinbriefcaseclicked = false;
+
     private string mostrecentitem;
     public void BriefcaseActivity(string itemname, int lootboxtype)
     {
@@ -703,6 +840,14 @@ public class DiscordController : MonoBehaviour
         else if (lootboxtype == 2)
         {
             goldenbriefcaseclicked = true;
+        }
+        else if (lootboxtype == 3)
+        {
+            diamondbriefcaseclicked = true;
+        }
+        else if (lootboxtype == 4)
+        {
+            pumpkinbriefcaseclicked = true;
         }
     }
 
@@ -716,7 +861,33 @@ public class DiscordController : MonoBehaviour
             CurrentSize = 1, // Replace with actual current party size
             MaxSize = 10 // Replace with actual maximum party size
         };
-        if (goldenbriefcaseclicked)
+        if (diamondbriefcaseclicked)
+        {
+            activity.State = "Opened a Diamond Briefcase";
+            activity.Details = "Recieved a " + mostrecentitem;
+            activity.Timestamps.Start = startTime;
+
+            activity.Assets.LargeImage = "diamondbriefcase";
+            activity.Assets.LargeText = "Dollar";
+            activity.Party = new Discord.ActivityParty
+            {
+                Id = "party_id", // Replace with actual party ID
+                Size = new Discord.PartySize
+                {
+                    CurrentSize = 1, // Replace with actual current party size
+                    MaxSize = 2 // Replace with actual maximum party size
+                }
+            };
+
+            // Example of setting secrets if supported
+            activity.Secrets = new Discord.ActivitySecrets
+            {
+                Join = "join_secret", // Replace with actual join secret
+                Spectate = "spectate_secret", // Replace with actual spectate secret
+                Match = "match_secret" // Replace with actual match secret
+            };
+        }
+        else if (goldenbriefcaseclicked)
         {
             activity.State = "Opened a Golden Briefcase";
 
@@ -724,6 +895,33 @@ public class DiscordController : MonoBehaviour
             activity.Timestamps.Start = startTime;
 
             activity.Assets.LargeImage = "goldenbriefcase";
+            activity.Assets.LargeText = "Dollar";
+            activity.Party = new Discord.ActivityParty
+            {
+                Id = "party_id", // Replace with actual party ID
+                Size = new Discord.PartySize
+                {
+                    CurrentSize = 1, // Replace with actual current party size
+                    MaxSize = 2 // Replace with actual maximum party size
+                }
+            };
+
+            // Example of setting secrets if supported
+            activity.Secrets = new Discord.ActivitySecrets
+            {
+                Join = "join_secret", // Replace with actual join secret
+                Spectate = "spectate_secret", // Replace with actual spectate secret
+                Match = "match_secret" // Replace with actual match secret
+            };
+        }
+        else if (pumpkinbriefcaseclicked)
+        {
+            activity.State = "Opened a Golden Briefcase";
+
+            activity.Details = "Recieved a " + mostrecentitem;
+            activity.Timestamps.Start = startTime;
+
+            activity.Assets.LargeImage = "pumpkinbriefcase";
             activity.Assets.LargeText = "Dollar";
             activity.Party = new Discord.ActivityParty
             {

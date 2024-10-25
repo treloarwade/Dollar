@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class DraggableObject1 : MonoBehaviour
+public class DraggableObject2 : MonoBehaviour
 {
     private Vector3 offset;
     private float zCoordinate;
@@ -8,6 +8,7 @@ public class DraggableObject1 : MonoBehaviour
     private Rigidbody2D rb;
     private Vector3 lastPosition; // To store the last position for velocity calculation
     private Vector3 velocity; // To store the calculated velocity
+    public ToggleRigidbody2D toggleRigidbody;
 
     void Awake()
     {
@@ -17,6 +18,10 @@ public class DraggableObject1 : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (toggleRigidbody.fixeddollar)
+        {
+            return;
+        }
         // Record the distance between the object and the camera in the z-axis
         zCoordinate = Camera.main.WorldToScreenPoint(transform.position).z;
 
@@ -38,6 +43,10 @@ public class DraggableObject1 : MonoBehaviour
 
     void OnMouseDrag()
     {
+        if (toggleRigidbody.fixeddollar)
+        {
+            return;
+        }
         // Move the object to follow the mouse, maintaining the offset
         Vector3 newPosition = GetMouseWorldPosition() + offset;
 
@@ -53,6 +62,10 @@ public class DraggableObject1 : MonoBehaviour
 
     void OnMouseUp()
     {
+        if (toggleRigidbody.fixeddollar)
+        {
+            return;
+        }
         if (rb != null)
         {
             // Re-enable gravity
@@ -73,7 +86,7 @@ public class DraggableObject1 : MonoBehaviour
         Vector3 mousePoint = Input.mousePosition;
 
         // Set the z coordinate to the recorded z-coordinate from OnMouseDown
-        mousePoint.z = zCoordinate;
+        mousePoint.z = 10;
 
         // Convert screen coordinates to world coordinates
         return Camera.main.ScreenToWorldPoint(mousePoint);

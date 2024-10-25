@@ -5,7 +5,7 @@ using System.Collections;
 public class UpgradeMenu : MonoBehaviour
 {
     public GameObject Menu;
-    private Vector3 openPosition = new Vector3(0, -220, 0);
+    private Vector3 openPosition = new Vector3(0, -200, 0);
     private Vector3 closedPosition = new Vector3(0, -400, 0);
     private Vector3 restingPosition = new Vector3(0, -10000, 0);
     private Vector3 itemposition;
@@ -16,12 +16,15 @@ public class UpgradeMenu : MonoBehaviour
     public GameObject cowphysicsitem;
     public GameObject duckphysicsitem;
     public GameObject diamondduckphysicsitem;
+    public GameObject minecartphysicsitem;
     public GameObject pumpkinphysicsitem;
+    public GameObject moneytree;
     public GameObject borders;
     public long moneyToAdd; // Adjust this value as needed
+    public ToggleRigidbody2D toggleRigidbody2D;
     public void BordersOnOff()
     {
-        if (!cowphysicsitem.activeSelf && !atmphysicsitem.activeSelf && !duckphysicsitem.activeSelf && !diamondduckphysicsitem.activeSelf && !pumpkinphysicsitem.activeSelf)
+        if (toggleRigidbody2D.fixeddollar && !cowphysicsitem.activeSelf && !atmphysicsitem.activeSelf && !duckphysicsitem.activeSelf && !diamondduckphysicsitem.activeSelf && !pumpkinphysicsitem.activeSelf && !minecartphysicsitem.activeSelf)
         {
             borders.SetActive(false);
         }
@@ -59,6 +62,16 @@ public class UpgradeMenu : MonoBehaviour
         diamondduckphysicsitem.SetActive(!diamondduckphysicsitem.activeSelf);
         diamondduckphysicsitem.transform.localPosition = new Vector3(0, 4, 10);
         BordersOnOff();
+    }
+    public void ToggleMinecartPhysicsItem()
+    {
+        minecartphysicsitem.SetActive(!minecartphysicsitem.activeSelf);
+        minecartphysicsitem.transform.localPosition = new Vector3(0, 4, 10);
+        BordersOnOff();
+    }
+    public void ToggleTree()
+    {
+        moneytree.SetActive(!moneytree.activeSelf);
     }
     public void AddMoney()
     {
