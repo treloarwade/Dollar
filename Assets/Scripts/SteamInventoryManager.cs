@@ -8,7 +8,6 @@ using UnityEngine.Networking;
 using System;
 
 
-
 public class SteamInventoryManager : MonoBehaviour
 {
     public GIFPlayer player;
@@ -32,7 +31,7 @@ public class SteamInventoryManager : MonoBehaviour
     public GameObject SmallerInventoryItem;
     public GameObject EvenSmallerInventoryItem;
     public GameObject VerySmallerInventoryItem;
-
+    public GameObject InventoryItemV4;
     public GameObject InventoryScreen;
     public ItemDatabase itemDatabase;
     private Coroutine toggleCoroutine = null;
@@ -262,6 +261,17 @@ public class SteamInventoryManager : MonoBehaviour
             targetPosition = openPosition; // Open position first
             startingPosition = closedPosition;
             clickcounter.clickenabled = false;
+            if (Over45)
+            {
+                scrollRect.enabled = true;  // Enable scrolling functionality
+                scrollBar.SetActive(true);
+            }
+            else
+            {
+                scrollRect.enabled = false;  // Enable scrolling functionality
+                scrollBar.SetActive(false);
+            }
+
         }
         else // If currently open, close it
         {
@@ -271,8 +281,10 @@ public class SteamInventoryManager : MonoBehaviour
             {
                 clickcounter.clickenabled = true;
             }
-
+            scrollRect.enabled = false;  // Enable scrolling functionality
+            scrollBar.SetActive(false);
         }
+
 
         toggleCoroutine = StartCoroutine(MoveInventoryScreen(targetPosition, startingPosition));
     }
@@ -740,12 +752,22 @@ public class SteamInventoryManager : MonoBehaviour
         yield return null;
     }
 
-
+    public ScrollRect scrollRect;
+    public GameObject scrollBar;
+    private bool Over45 = false;
     private void UpdateInventoryUI(Dictionary<int, int> itemCounts)
     {
         // Determine which item prefab to use based on the number of items
         GameObject itemPrefab;
-        if (Items.Count > 18)
+        if (Items.Count > 45)
+        {
+            Over45 = true;
+        }
+        if (Items.Count > 24)
+        {
+            itemPrefab = InventoryItemV4;
+        }
+        else if (Items.Count > 18)
         {
             itemPrefab = VerySmallerInventoryItem;
         }
@@ -766,7 +788,13 @@ public class SteamInventoryManager : MonoBehaviour
         GridLayoutGroup gridLayoutGroup = ItemContent.GetComponent<GridLayoutGroup>();
         if (gridLayoutGroup != null)
         {
-            if (Items.Count > 18)
+            if (Items.Count > 24)
+            {
+                gridLayoutGroup.cellSize = new Vector2(87, 95);
+                gridLayoutGroup.padding.left = 5;
+                gridLayoutGroup.padding.top = 0;
+            }
+            else if (Items.Count > 18)
             {
                 gridLayoutGroup.cellSize = new Vector2(99, 99);
                 gridLayoutGroup.padding.left = 2;
@@ -843,7 +871,7 @@ public class SteamInventoryManager : MonoBehaviour
             itemIcon.sprite = item.Icon;
 
             // Set text color based on previously equipped item ID
-            if (previousitem == 109 || previousitem == 114 || previousitem == 124)
+            if (previousitem == 109 || previousitem == 114 || previousitem == 124 || previousitem == 139)
             {
                 itemName.color = highlightColor;
             }
@@ -929,8 +957,13 @@ public class SteamInventoryManager : MonoBehaviour
     }
     private Color currentbackgroundcolor = new Color(0.6078f, 0.8667f, 1.0f, 0.0f);
     public Image topbar;
+    public ColorPicker colorPicker;
     IEnumerator TopBarColorChange(Color color)
     {
+        if (colorPicker.colorchanged == true)
+        {
+            yield break;
+        }
         float elapsedTime = 0f;
         Color initialColor = topbar.color; // Store the initial color
 
@@ -982,12 +1015,11 @@ public class SteamInventoryManager : MonoBehaviour
         deletetext.color = color;
     }
     public SpriteRenderer windowswallpaper;
-    private IEnumerator Fade(SpriteRenderer spriteRenderer, float targetAlpha)
+    private IEnumerator Fade(SpriteRenderer spriteRenderer, float targetAlpha, float duration)
     {
         Color color = spriteRenderer.color;
         float startAlpha = color.a;
         float elapsedTime = 0f;
-        float duration = 1f;
 
         while (elapsedTime < duration)
         {
@@ -1006,11 +1038,11 @@ public class SteamInventoryManager : MonoBehaviour
     {
         StartCoroutine(ColorChange(new Color32(26, 132, 155, 255)));
         windowswallpaper.enabled = true;
-        StartCoroutine(Fade(windowswallpaper, 1f));
+        StartCoroutine(Fade(windowswallpaper, 1f, 1f));
     }
     public void WindowsVistaShutdown()
     {
-        StartCoroutine(Fade(windowswallpaper, 0f));
+        StartCoroutine(Fade(windowswallpaper, 0f, 1f));
 
     }
     public void StartMovement()
@@ -1032,6 +1064,7 @@ public class SteamInventoryManager : MonoBehaviour
     public float duration = 2.0f;
     public Color normalTextColor = new Color(50f / 255f, 50f / 255f, 50f / 255f);
     public Color normalColor = new Color(155f / 255f, 221f / 255f, 255f / 255f); // Background color
+    public GameObject mainDollar;
     public SpriteRenderer dollar;
     public GameObject normalbutton;
     public GameObject briefcase;
@@ -1127,10 +1160,12 @@ public class SteamInventoryManager : MonoBehaviour
     public AudioManager audioManager;
     public BoxCollider2D dollarhitbox;
     public AutoclickerManager autoclickerManager;
+    public SliceOnCollision sliceOnCollision;
     private void OnInventoryItemClick(int itemId)
     {
         if (itemId < 500 || itemId > 600)
         {
+            mainDollar.SetActive(true);
             // Perform the actions if itemId is below 500 or above 600
             clickcounter.dollarburned = false;
 
@@ -1163,10 +1198,15 @@ public class SteamInventoryManager : MonoBehaviour
             discordController.SetAutumn(false);
             StartCoroutine(TopBarColorChange(new Color(113f / 255f, 113f / 255f, 255f / 255f, 183f / 255f)));
             clickcounter.SetDollarType(itemId);
-
-
-
+            sliceOnCollision.SetItemID(itemId);
+            if (itemId != 133 && itemId != 134 && itemId != 135 && itemId != 137 && itemId != 138)
+            {
+                StartCoroutine(TurnOffBackground());
+            }
+            StopMovingFog();
         }
+
+
 
         switch (itemId)
         {
@@ -1582,6 +1622,56 @@ public class SteamInventoryManager : MonoBehaviour
                 StartCoroutine(CloseText());
                 StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
                 break;
+            case 133:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeMaterial(34);
+                ChangeSprite(133);
+                ChangeBackground(133);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 134:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeMaterial(35);
+                ChangeSprite(134);
+                ChangeBackground(134);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 135:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeMaterial(36);
+                ChangeSprite(135);
+                ChangeBackground(135);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 137:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeMaterial(37);
+                ChangeSprite(137);
+                ChangeBackground(137);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 138:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeMaterial(38);
+                ChangeSprite(138);
+                ChangeBackground(138);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
             case 136:
                 // Handle item ID 116 logic
                 dollarhitbox.enabled = false;
@@ -1596,6 +1686,18 @@ public class SteamInventoryManager : MonoBehaviour
                 clicktoequip.text = "Click multiple times to open";
                 StartCoroutine(CloseText());
                 StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 139:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeMaterial(39);
+                ChangeSprite(139);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                StartCoroutine(ColorChange(Color.black));
+                StartMovingFog();
+                StartCoroutine(ColorChangeText(Color.white));
+                StartCoroutine(ChangeAllImagesColors(Color.grey, 1f));
                 break;
             case 500:
                 musicicon.SetActive(true);
@@ -1712,6 +1814,9 @@ public class SteamInventoryManager : MonoBehaviour
                 break;
             case 514:
                 SteamFriends.ActivateGameOverlayToWebPage("https://steamcommunity.com/sharedfiles/filedetails/?id=3351897350");
+                break;
+            case 515:
+                upgradeMenu.ToggleSwordPhysicsItem();
                 break;
             case 1000:
                 dollar.enabled = true;
@@ -1889,8 +1994,98 @@ public class SteamInventoryManager : MonoBehaviour
     public float minTravelTime = 15f; // Minimum time to cross the screen
     public float maxTravelTime = 20f; // Maximum time to cross the screen
     public float offsetX = 300f; // Offset to start clouds off-screen
-
+    public Image currentBackground;
+    public Image newBackground;
+    public float transitionDuration = 1.0f;
     private List<Coroutine> cloudMovementCoroutines = new List<Coroutine>();
+    public void ChangeBackground(int index)
+    {
+        // Load the new sprite from the Resources folder
+        Sprite newbackground = Resources.Load<Sprite>($"background_{index}");
+        newBackground.sprite = newbackground;
+        StartCoroutine(TransitionBackground());
+        background.sprite = newbackground;
+        StartCoroutine(ColorChange(Color.white));
+    }
+
+    private IEnumerator TransitionBackground()
+    {
+        float elapsedTime = 0f;
+
+        // Store the starting and target alpha values
+        Color currentColor = currentBackground.color;
+        Color newColor = newBackground.color;
+        float initialCurrentAlpha = currentColor.a;
+        float targetCurrentAlpha = 0f;
+        float initialNewAlpha = newColor.a;
+        float targetNewAlpha = 1f;
+
+        while (elapsedTime < transitionDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alphaRatio = elapsedTime / transitionDuration;
+
+            // Lerp alpha values for both images
+            currentColor.a = Mathf.Lerp(initialCurrentAlpha, targetCurrentAlpha, alphaRatio);
+            newColor.a = Mathf.Lerp(initialNewAlpha, targetNewAlpha, alphaRatio);
+
+            currentBackground.color = currentColor;
+            newBackground.color = newColor;
+
+            yield return null;
+        }
+
+        // Ensure final alpha values are set
+        SetAlpha(currentBackground, 0f);
+        SetAlpha(newBackground, 1f);
+
+        // Swap backgrounds
+        Image temp = currentBackground;
+        currentBackground = newBackground;
+        newBackground = temp;
+    }
+    private IEnumerator TurnOffBackground()
+    {
+        float elapsedTime = 0f;
+
+        // Store the starting and target alpha values
+        Color currentColor = currentBackground.color;
+        Color newColor = newBackground.color;
+        float initialCurrentAlpha = currentColor.a;
+        float initialNewAlpha = newColor.a;
+
+        while (elapsedTime < transitionDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alphaRatio = elapsedTime / transitionDuration;
+
+            // Lerp alpha values for both images
+            currentColor.a = Mathf.Lerp(initialCurrentAlpha, 0f, alphaRatio);
+            newColor.a = Mathf.Lerp(initialNewAlpha, 0f, alphaRatio);
+
+            currentBackground.color = currentColor;
+            newBackground.color = newColor;
+
+            yield return null;
+        }
+
+        // Ensure final alpha values are set
+        SetAlpha(currentBackground, 0f);
+        SetAlpha(newBackground, 0f);
+
+        // Swap backgrounds
+        Image temp = currentBackground;
+        currentBackground = newBackground;
+        newBackground = temp;
+        background.sprite = null;
+    }
+
+    private void SetAlpha(Image image, float alpha)
+    {
+        Color color = image.color;
+        color.a = alpha;
+        image.color = color;
+    }
     private void PlaceMoonAndStars()
     {
         foreach (GameObject celestialObject in moonandstars)
@@ -2117,7 +2312,21 @@ public class SteamInventoryManager : MonoBehaviour
     {
         StartCoroutine(StartEachCloud2());
     }
-    
+    public void StartMovingFog()
+    {
+        StartCoroutine(StartFog());
+        StartCoroutine(Fade(darkwallpaper1, 1f, 0.5f));
+        StartCoroutine(Fade(darkwallpaper2, 1f, 0.5f));
+
+    }
+    public void StopMovingFog()
+    {
+        StopCoroutine(StartFog());
+        StartCoroutine(Fade(darkwallpaper1, 0f, 0.5f));
+        StartCoroutine(Fade(darkwallpaper2, 0f, 0.5f));
+
+    }
+
     private IEnumerator StartEachCloud()
     {
         cloudsenabled = true;
@@ -2148,8 +2357,60 @@ public class SteamInventoryManager : MonoBehaviour
         }
         yield return null;
     }
+    public SpriteRenderer darkwallpaper1;
+    public SpriteRenderer darkwallpaper2;
+    public GameObject darkbackground1;
+    public GameObject darkbackground2;
+    private float resetXPosition2 = -18.44124f; // X position where clouds reset
+
+    private IEnumerator StartFog()
+    {
+
+        while (true) // Keep the coroutine running indefinitely
+        {
+            // Move both dark backgrounds to the left
+            darkbackground1.transform.position += Vector3.left * 0.1f * Time.deltaTime;
+            darkbackground2.transform.position += Vector3.left * 0.1f * Time.deltaTime;
+
+            // Check if either dark background has reached the reset position
+            if (darkbackground1.transform.position.x <= resetXPosition2)
+            {
+                // Reset their positions to the right side of the screen
+                ResetBackgroundPosition(darkbackground1);
+            }
+            if (darkbackground2.transform.position.x <= resetXPosition2)
+            {
+                // Reset their positions to the right side of the screen
+                ResetBackgroundPosition(darkbackground2);
+            }
+
+            yield return null; // Continue the loop on the next frame
+        }
+    }
+
+    private void ResetBackgroundPosition(GameObject background)
+    {
+        background.transform.position = new Vector3(-resetXPosition2, background.transform.position.y, background.transform.position.z);
+    }
+
+    private IEnumerator StartEachFog2()
+    {
+        cloudsenabled3 = true;
+        foreach (GameObject cloud in nightClouds)
+        {
+            if (cloudsenabled3)
+            {
+                Coroutine cloudMovementCoroutine = StartCoroutine(MoveFog(cloud));
+                cloudMovementCoroutines.Add(cloudMovementCoroutine);
+                yield return new WaitForSeconds(1f);
+            }
+
+        }
+        yield return null;
+    }
     private bool cloudsenabled;
     private bool cloudsenabled2;
+    private bool cloudsenabled3;
     public void StopMovingClouds()
     {
         cloudsenabled = false;
@@ -2180,10 +2441,41 @@ public class SteamInventoryManager : MonoBehaviour
         {
             // Calculate the starting X position based on the screen width and offset
             float startXPosition = Screen.width + offsetX;
+            float randomY = UnityEngine.Random.Range(0f, Screen.height);
+
+            // Get the bottom Y position of the screen in world coordinates
+            float bottomY = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, Camera.main.transform.position.z)).y;
+            // Set the Y position to the bottom of the screen
+            cloud.transform.position = new Vector3(startXPosition, randomY, cloud.transform.position.z);
+
+            // Calculate the distance the cloud needs to travel (positive difference)
+            float distance = startXPosition - resetXPosition;
+
+            // Random time to travel the distance
+            float travelTime = UnityEngine.Random.Range(minTravelTime, maxTravelTime);
+
+            // Calculate the speed needed to cover the distance in the given time
+            float speed = distance / travelTime;
+
+            while (cloud.transform.position.x > resetXPosition)
+            {
+                // Move the cloud to the left at the calculated speed
+                cloud.transform.position += Vector3.left * speed * Time.deltaTime;
+                yield return null; // Continue the loop on the next frame
+            }
+        }
+    }
+
+    private IEnumerator MoveFog(GameObject cloud)
+    {
+        while (true)
+        {
+            // Calculate the starting X position based on the screen width and offset
+            float startXPosition = Screen.width + offsetX;
 
             // Random Y position between 0 and 1080
             float randomY = UnityEngine.Random.Range(0f, Screen.height);
-            cloud.transform.position = new Vector3(startXPosition, randomY, cloud.transform.position.z);
+            cloud.transform.position = new Vector3(startXPosition, 0, cloud.transform.position.z);
 
             // Calculate the distance the cloud needs to travel (positive difference)
             float distance = startXPosition - resetXPosition;

@@ -10,6 +10,9 @@ public class ResolutionDropdown : MonoBehaviour
     public MoveScreens moveScreens;
     public Text fpstext;
     public GameObject fpsmenu;
+    public GameObject colormenu;
+    private Vector3 originalposition;
+
 
     private int[] vsyncValues = { 1, 3 };
     private int currentVSyncIndex = 0; // Default index for VSync count 1
@@ -18,7 +21,7 @@ public class ResolutionDropdown : MonoBehaviour
     {
         // Add listener for when the value of the Dropdown changes
         resolutionDropdown.onValueChanged.AddListener(OnDropdownValueChanged);
-
+        originalposition = colormenu.transform.position;
         // Set default VSync count
         SetVSyncCount(vsyncValues[currentVSyncIndex]);
     }
@@ -56,6 +59,14 @@ public class ResolutionDropdown : MonoBehaviour
                 fpsmenu.SetActive(!fpsmenu.activeSelf);
                 StartCoroutine(FPSmenu());
                 break;
+            case 5:
+                colormenu.SetActive(true);
+                StartCoroutine(FPSmenu());
+                colormenu.transform.position = originalposition;
+                break;
+            case 6:
+                Debug.Log("Reset");
+                break;
             default:
                 break;
         }
@@ -63,8 +74,8 @@ public class ResolutionDropdown : MonoBehaviour
 
     private IEnumerator FPSmenu()
     {
-        yield return new WaitForSeconds(0.01f);
-        resolutionDropdown.value = -1;
+        yield return new WaitForSeconds(0.2f);
+        resolutionDropdown.value = 7;
         yield return null;
     }
 

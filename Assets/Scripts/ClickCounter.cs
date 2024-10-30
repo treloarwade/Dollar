@@ -10,6 +10,7 @@ public class ClickCounter : MonoBehaviour
     public float clickCount = 0; // Variable to keep track of the number of clicks
     public DiscordController controller;
     public GameObject fire;
+    public GameObject goldenfire;
     public int dollartype = 100;
     public bool clickenabled = true;
     public bool onfire = false;
@@ -94,6 +95,10 @@ public class ClickCounter : MonoBehaviour
 
             BurstIntoFlames();
         }
+        else if (collider.CompareTag("GoldenFire"))
+        {
+            BurstIntoFlames2();
+        }
     }
     public ParticleSystem fire1;
     public ParticleSystem fire2;
@@ -149,23 +154,51 @@ public class ClickCounter : MonoBehaviour
         }
         if (dollartype == 103)
         {
-            StartCoroutine(CatchFire2());
+            StartCoroutine(CatchFire2(fire));
         }
         else if (dollartype == 104 || dollartype == 106)
         {
-            StartCoroutine(CatchFire3());
+            StartCoroutine(CatchFire3(fire));
         }
         else
         {
-            StartCoroutine(CatchFire());
+            StartCoroutine(CatchFire(fire));
         }
         dollarburned = true;
     }
-    private IEnumerator CatchFire3()
+    private void BurstIntoFlames2()
+    {
+        if (!clickenabled)
+        {
+            return;
+        }
+        if (dollartype == 101 || dollartype == 110 || dollartype == 117 || dollartype == 118 || dollartype == 119 || dollartype == 120 || dollartype == 121 || dollartype == 122 || dollartype == 123)
+        {
+            return;
+        }
+        if (!spriteRenderer.enabled)
+        {
+            return;
+        }
+        if (dollartype == 103)
+        {
+            StartCoroutine(CatchFire2(goldenfire));
+        }
+        else if (dollartype == 104 || dollartype == 106)
+        {
+            StartCoroutine(CatchFire3(goldenfire));
+        }
+        else
+        {
+            StartCoroutine(CatchFire(goldenfire));
+        }
+        dollarburned = true;
+    }
+    private IEnumerator CatchFire3(GameObject firecollision)
     {
         onfire = true;
 
-        if (fire.transform.position.x > 0)
+        if (firecollision.transform.position.x > 0)
         {
             fire2.Play();
             fire3.Play();
@@ -213,11 +246,11 @@ public class ClickCounter : MonoBehaviour
 
         yield return null;
     }
-    private IEnumerator CatchFire2()
+    private IEnumerator CatchFire2(GameObject firecollision)
     {
         onfire = true;
 
-        if (fire.transform.position.x > 0)
+        if (firecollision.transform.position.x > 0)
         {
             fire2.Play();
             fire3.Play();
@@ -265,11 +298,11 @@ public class ClickCounter : MonoBehaviour
 
         yield return null;
     }
-    private IEnumerator CatchFire()
+    private IEnumerator CatchFire(GameObject firecollision)
     {
         onfire = true;
 
-        if (fire.transform.position.x > 0)
+        if (firecollision.transform.position.x > 0)
         {
             fire2.Play();
             fire3.Play();

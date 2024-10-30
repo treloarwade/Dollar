@@ -18,13 +18,15 @@ public class UpgradeMenu : MonoBehaviour
     public GameObject diamondduckphysicsitem;
     public GameObject minecartphysicsitem;
     public GameObject pumpkinphysicsitem;
+    public GameObject swordphysicsitem;
+
     public GameObject moneytree;
     public GameObject borders;
     public long moneyToAdd; // Adjust this value as needed
     public ToggleRigidbody2D toggleRigidbody2D;
     public void BordersOnOff()
     {
-        if (toggleRigidbody2D.fixeddollar && !cowphysicsitem.activeSelf && !atmphysicsitem.activeSelf && !duckphysicsitem.activeSelf && !diamondduckphysicsitem.activeSelf && !pumpkinphysicsitem.activeSelf && !minecartphysicsitem.activeSelf)
+        if (toggleRigidbody2D.fixeddollar && !cowphysicsitem.activeSelf && !atmphysicsitem.activeSelf && !duckphysicsitem.activeSelf && !diamondduckphysicsitem.activeSelf && !pumpkinphysicsitem.activeSelf && !minecartphysicsitem.activeSelf && !swordphysicsitem.activeSelf)
         {
             borders.SetActive(false);
         }
@@ -67,6 +69,12 @@ public class UpgradeMenu : MonoBehaviour
     {
         minecartphysicsitem.SetActive(!minecartphysicsitem.activeSelf);
         minecartphysicsitem.transform.localPosition = new Vector3(0, 4, 10);
+        BordersOnOff();
+    }
+    public void ToggleSwordPhysicsItem()
+    {
+        swordphysicsitem.SetActive(!swordphysicsitem.activeSelf);
+        swordphysicsitem.transform.localPosition = new Vector3(0, 4, 10);
         BordersOnOff();
     }
     public void ToggleTree()
