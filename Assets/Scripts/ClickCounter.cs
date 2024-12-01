@@ -64,6 +64,9 @@ public class ClickCounter : MonoBehaviour
             case 123:
                 controller.OnDiamondDollarClicked(1);
                 break;
+            case 141:
+                controller.OnIceDollarClicked(1);
+                break;
             default:
                 controller.OnDollarClicked(1);
                 break;

@@ -7,7 +7,6 @@ using System.Linq;
 using UnityEngine.Networking;
 using System;
 
-
 public class SteamInventoryManager : MonoBehaviour
 {
     public GIFPlayer player;
@@ -18,7 +17,7 @@ public class SteamInventoryManager : MonoBehaviour
     public Text successtext2;
     public GameObject cooldowntext;
     public GameObject cooldowntext2;
-
+    public FrictionToggle frictionToggle;
     public Text totaldrops;
     private int totalDrops = 0;
     private float cooldownTime = 60f;
@@ -139,7 +138,7 @@ public class SteamInventoryManager : MonoBehaviour
             yield return new WaitForSeconds(10f);
         }
     }
-    public GameObject minecartDollars;
+
     private void ChangeSprite(int index)
     {
         // Load the new sprite from the Resources folder
@@ -156,13 +155,38 @@ public class SteamInventoryManager : MonoBehaviour
             Debug.LogWarning($"The sprite 'sprite_{index}' could not be found in the Resources folder.");
         }
     }
+    public GameObject[] minecartDollars;
+
+    private void MinecartDollarSprite2(int spriteIndex)
+    {
+        // Make sure spriteIndex is within range to avoid any issues
+        if (minecartDollars != null && spriteIndex >= 0 && spriteIndex < minecartDollars.Length)
+        {
+            // Activate the GameObject at spriteIndex
+            minecartDollars[spriteIndex].SetActive(true);
+            Debug.Log($"Activated minecartDollars[{spriteIndex}]");
+
+            // Change sprites for each child within this GameObject
+            foreach (Transform child in minecartDollars[spriteIndex].transform)
+            {
+                ChangeSprite2(child, spriteIndex);  // Use spriteIndex directly for sprite selection
+                Debug.Log($"Changed sprite for child {child.name} in minecartDollars[{spriteIndex}] with sprite index {spriteIndex}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"spriteIndex {spriteIndex} is out of bounds for minecartDollars array (length: {minecartDollars?.Length ?? 0})");
+        }
+    }
     private void MinecartDollarSprite(int index)
     {
-        minecartDollars.SetActive(true);
-        foreach (Transform child in minecartDollars.transform)
+        foreach (GameObject children in minecartDollars)
         {
-            // You can pass the index however you'd like; this example uses the child index
-            ChangeSprite2(child, index);
+            foreach (Transform child in children.transform)
+            {
+                // You can pass the index however you'd like; this example uses the child index
+                ChangeSprite2(child, index);
+            }
         }
     }
     private void ChangeSprite2(Transform child, int index)
@@ -203,25 +227,30 @@ public class SteamInventoryManager : MonoBehaviour
             Debug.LogWarning("Material index out of range.");
         }
     }
+    public ParticleSystem[] minecartparticles;
     public void ChangeMaterial2(int index)
     {
-        if (index >= 0 && index < materials.Length)
+        foreach (ParticleSystem particle in minecartparticles)
         {
-            var renderer = minecartmoney1.GetComponent<ParticleSystemRenderer>();
-            if (renderer != null)
+            if (index >= 0 && index < materials.Length)
             {
-                renderer.material = materials[index];
-                currentMaterialIndex = index;
+                var renderer = particle.GetComponent<ParticleSystemRenderer>();
+                if (renderer != null)
+                {
+                    renderer.material = materials[index];
+                    currentMaterialIndex = index;
+                }
+                else
+                {
+                    Debug.LogWarning("No ParticleSystemRenderer found on the particle system.");
+                }
             }
             else
             {
-                Debug.LogWarning("No ParticleSystemRenderer found on the particle system.");
+                Debug.LogWarning("Material index out of range.");
             }
         }
-        else
-        {
-            Debug.LogWarning("Material index out of range.");
-        }
+
     }
     IEnumerator StartCountdown(float timeRemaining)
     {
@@ -547,6 +576,7 @@ public class SteamInventoryManager : MonoBehaviour
     public Text goldenbriefcasecounttext;
     public GameObject StackWarning;
     public GameObject StackWarning2;
+    private bool swordVisible = false;
     public void LogAllItemsInInventory()
     {
         itemsToSplit.Clear();
@@ -618,6 +648,7 @@ public class SteamInventoryManager : MonoBehaviour
                     storeditems = itemCounts;
                     Debug.Log($"Total items: {totalItems}");
                     UpdateInventoryUI(itemCounts);
+
                 }
                 else
                 {
@@ -848,14 +879,25 @@ public class SteamInventoryManager : MonoBehaviour
             // Check if the item ID is over 999
             string displayName = item.Name;
 
-            if (itemId > 999 || itemId == 123)
+            if (itemId > 2000 || itemId == 123)
             {
                 itemName.text = displayName; // Only the name, no quantity
             }
             else
             {
                 int quantity = itemCounts[itemId];
+                if (itemId == 139)
+                {
+                    if (quantity > 19)
+                    {
+                        swordVisible = true;
+                    }
+                    else
+                    {
+                        swordVisible = false;
 
+                    }
+                }
                 // List of item IDs to ignore for the pluralization rule
                 List<int> ignorePluralization = new List<int> { 102, 103, 104, 105, 106 };
 
@@ -1034,6 +1076,18 @@ public class SteamInventoryManager : MonoBehaviour
         color.a = targetAlpha;
         spriteRenderer.color = color;
     }
+    public SpriteRenderer smswallpaper;
+    public void SMSDollarStartup()
+    {
+        StartCoroutine(ColorChange(new Color32(234, 191, 199, 255)));
+        smswallpaper.enabled = true;
+        StartCoroutine(Fade(smswallpaper, 1f, 1f));
+    }
+    public void SMSDollarShutdown()
+    {
+        StartCoroutine(Fade(smswallpaper, 0f, 1f));
+
+    }
     public void WindowsVistaStartup()
     {
         StartCoroutine(ColorChange(new Color32(26, 132, 155, 255)));
@@ -1068,6 +1122,8 @@ public class SteamInventoryManager : MonoBehaviour
     public SpriteRenderer dollar;
     public GameObject normalbutton;
     public GameObject briefcase;
+    public GameObject briefcase2;
+    public GameObject sword;
     public GameObject goldenbriefcase;
     public GameObject diamondbriefcase;
     public GameObject pumpkinbriefcase;
@@ -1168,10 +1224,12 @@ public class SteamInventoryManager : MonoBehaviour
             mainDollar.SetActive(true);
             // Perform the actions if itemId is below 500 or above 600
             clickcounter.dollarburned = false;
-
+            sword.SetActive(false);
             dollar.enabled = false;
             dollarhitbox.enabled = false;
             briefcase.SetActive(false);
+            briefcase2.SetActive(false);
+            frictionToggle.AddFriction();
             goldenbriefcase.SetActive(false);
             diamondbriefcase.SetActive(false);
             pumpkinbriefcase.SetActive(false);
@@ -1188,6 +1246,7 @@ public class SteamInventoryManager : MonoBehaviour
             discordController.SetDollarType(itemId);
             player.StopGIF();
             WindowsVistaShutdown();
+            SMSDollarShutdown();
             neonobjects.SetActive(false);
             neonobjects2.SetActive(false);
             StopFading();
@@ -1199,11 +1258,12 @@ public class SteamInventoryManager : MonoBehaviour
             StartCoroutine(TopBarColorChange(new Color(113f / 255f, 113f / 255f, 255f / 255f, 183f / 255f)));
             clickcounter.SetDollarType(itemId);
             sliceOnCollision.SetItemID(itemId);
-            if (itemId != 133 && itemId != 134 && itemId != 135 && itemId != 137 && itemId != 138)
+            if (itemId != 133 && itemId != 134 && itemId != 135 && itemId != 137 && itemId != 138 && itemId != 141)
             {
                 StartCoroutine(TurnOffBackground());
             }
             StopMovingFog();
+            swordcollision.SetActive(true);
         }
 
 
@@ -1412,11 +1472,11 @@ public class SteamInventoryManager : MonoBehaviour
                 clicktoequip.text = "Click multiple times to open";
                 StartCoroutine(CloseText());
                 StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                swordcollision.SetActive(false);
                 break;
             case 117:
                 dollar.enabled = true;
                 dollarhitbox.enabled = true;
-
                 ChangeMaterial(11);
                 ChangeMaterial2(11);
                 ChangeSprite(117);
@@ -1547,6 +1607,7 @@ public class SteamInventoryManager : MonoBehaviour
             case 126:
                 // Handle item ID 116 logic
                 dollarhitbox.enabled = false;
+                swordcollision.SetActive(false);
 
 
                 goldenbriefcase.SetActive(true);
@@ -1615,6 +1676,8 @@ public class SteamInventoryManager : MonoBehaviour
                 StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
                 break;
             case 132:
+                swordcollision.SetActive(false);
+
                 dollarhitbox.enabled = false;
                 pumpkinbriefcase.SetActive(true);
                 counter.text = "";
@@ -1676,6 +1739,7 @@ public class SteamInventoryManager : MonoBehaviour
                 // Handle item ID 116 logic
                 dollarhitbox.enabled = false;
 
+                swordcollision.SetActive(false);
 
                 diamondbriefcase.SetActive(true);
                 if (moveScreens.currentScreen == 2)
@@ -1688,6 +1752,10 @@ public class SteamInventoryManager : MonoBehaviour
                 StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
                 break;
             case 139:
+                if (swordVisible)
+                {
+                    sword.SetActive(true);
+                }
                 dollar.enabled = true;
                 dollarhitbox.enabled = true;
                 ChangeMaterial(39);
@@ -1695,9 +1763,30 @@ public class SteamInventoryManager : MonoBehaviour
                 ColorChange(Color.white);
                 notadollar.SetActive(true);
                 StartCoroutine(ColorChange(Color.black));
+                frictionToggle.AddFriction();
                 StartMovingFog();
                 StartCoroutine(ColorChangeText(Color.white));
                 StartCoroutine(ChangeAllImagesColors(Color.grey, 1f));
+                break;
+            case 140:
+                swordcollision.SetActive(false);
+                // Handle item ID 116 logic
+                dollarhitbox.enabled = false;
+                briefcase2.SetActive(true);
+                counter.text = "";
+                clicktoequip.text = "Click multiple times to open";
+                StartCoroutine(CloseText());
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 141:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                ChangeSprite(141);
+                ChangeBackground(141);
+                ColorChange(Color.white);
+                notadollar.SetActive(true);
+                frictionToggle.RemoveFriction();
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
                 break;
             case 500:
                 musicicon.SetActive(true);
@@ -1817,6 +1906,21 @@ public class SteamInventoryManager : MonoBehaviour
                 break;
             case 515:
                 upgradeMenu.ToggleSwordPhysicsItem();
+                break;
+            case 516:
+                upgradeMenu.ToggleBlueSwordPhysicsItem();
+                break;
+            case 517:
+                upgradeMenu.ToggleGreenSwordPhysicsItem();
+                break;
+            case 518:
+                upgradeMenu.ToggleOnyxSwordPhysicsItem();
+                break;
+            case 519:
+                upgradeMenu.ToggleNightSwordPhysicsItem();
+                break;
+            case 520:
+                upgradeMenu.TogglePurpleSwordPhysicsItem();
                 break;
             case 1000:
                 dollar.enabled = true;
@@ -1964,6 +2068,20 @@ public class SteamInventoryManager : MonoBehaviour
                     sparkle.Play();
                 }
                 ChangeSprite(1010);
+                StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
+                break;
+            case 1011:
+                dollar.enabled = true;
+                dollarhitbox.enabled = true;
+                SMSDollarStartup();
+                ChangeMaterial(40);
+                notadollar.SetActive(true);
+
+                if (moveScreens.currentScreen == 2)
+                {
+                    sparkle.Play();
+                }
+                ChangeSprite(1011);
                 StartCoroutine(ChangeAllImagesColors(Color.white, 1f));
                 break;
             default:
@@ -2997,6 +3115,66 @@ public class SteamInventoryManager : MonoBehaviour
             Debug.LogError("Exchange request failed");
         }
     }
+    public void SimpleExchangeTest7()
+    {
+        if (unstacking)
+        {
+            return;
+        }
+        if (briefcasecooldown)
+        {
+            return;
+        }
+        else
+        {
+            StartCoroutine(BriefcaseCooldown());
+        }
+        Debug.Log("Attempting simple exchange");
+        if (exchanging)
+        {
+            return;
+        }
+
+        // Use minimal setup for testing
+        List<SteamItemInstanceID_t> inputItems = GetItemIdsFromInventory(new SteamItemDef_t(140), 1);
+        lootboxType = 6;
+        if (inputItems.Count < 1)
+        {
+            Debug.LogError("Not enough items found in inventory for exchange.");
+            return;
+        }
+        uint[] inputQuantities = new uint[inputItems.Count];
+        for (int i = 0; i < inputItems.Count; i++)
+        {
+            inputQuantities[i] = 1;
+        }
+
+        SteamItemDef_t[] outputItems = new SteamItemDef_t[1];
+        outputItems[0] = new SteamItemDef_t(18);
+        uint[] outputQuantity = new uint[1];
+        outputQuantity[0] = 1;
+
+        SteamInventoryResult_t resultHandle;
+        bool success = SteamInventory.ExchangeItems(out resultHandle, outputItems, outputQuantity, (uint)outputItems.Length, inputItems.ToArray(), inputQuantities, (uint)inputItems.Count);
+        StartCoroutine(ExchangingCooldown());
+        if (success)
+        {
+
+            if (resultHandle != SteamInventoryResult_t.Invalid)
+            {
+                Debug.Log("Exchange request successful, waiting for callback...");
+                Debug.Log($"Result handle: {resultHandle}");
+            }
+            else
+            {
+                Debug.LogError("Invalid result handle received from exchange request.");
+            }
+        }
+        else
+        {
+            Debug.LogError("Exchange request failed");
+        }
+    }
     IEnumerator HideText()
     {
         yield return new WaitForSeconds(5f);
@@ -3103,10 +3281,12 @@ public class SteamInventoryManager : MonoBehaviour
     public GameObject itemPrefab;
     private List<int> additionalItemIDs2 = new List<int> { 101, 110, 105, 106, 136 };
     private List<int> additionalItemIDs = new List<int> { 101, 110, 118, 119, 120, 121, 136 };
-    private List<int> itemIDs1 = new List<int> { 100, 102, 103, 104, 105, 106, 110, 112, 116, 117, 125, 126, 128, 510 };
+    private List<int> itemIDs1 = new List<int> { 100, 102, 103, 104, 105, 106, 110, 112, 116, 117, 125, 126, 128};
     private List<int> itemIDs2 = new List<int> { 101, 104, 105, 106, 110, 117, 118, 119, 120, 121, 126 };
-    private List<int> itemIDs3 = new List<int> { 101, 105, 106, 110, 118, 119, 120, 121, 122, 123, 511 };
+    private List<int> itemIDs3 = new List<int> { 101, 105, 106, 110, 118, 119, 120, 121, 122, 123, 513, 514, 1011 };
     private List<int> itemIDs4 = new List<int> { 100, 128, 129, 130, 126, 512, 117 };
+    private List<int> itemIDs5 = new List<int> { 515, 515, 516, 517, 518, 519, 520 };
+    private List<int> itemIDs6 = new List<int> { 100, 102, 103, 104, 105, 106, 110, 118, 119 ,120 ,121, 133, 134, 135, 136, 137, 138, 141, 513, 514};
     public GameObject spinningBar;
     public ParticleSystem golddollars;
     public ParticleSystem silverdollars;
@@ -3114,9 +3294,9 @@ public class SteamInventoryManager : MonoBehaviour
     public ParticleSystem diamond2;
     public ParticleSystem pumpkin1;
     public ParticleSystem pumpkin2;
-
+    public ParticleSystem sworddollar;
     public Image[] allimages;
-
+    public GameObject swordcollision;
 
     public string mostrecentitemname;
 
@@ -3186,6 +3366,18 @@ public class SteamInventoryManager : MonoBehaviour
             PopulateGridWithItems(randomItems);
             itemIDs1.Remove(randomAdditionalItem);
         }
+        else if (lootboxType == 6)
+        {
+            List<int> randomItems = GenerateRandomItemList((int)item.m_iDefinition, 30, selectedIndex, itemIDs6);
+
+            PopulateGridWithItems(randomItems);
+        }
+        else if (lootboxType == 5)
+        {
+            List<int> randomItems = GenerateRandomItemList((int)item.m_iDefinition, 30, selectedIndex, itemIDs5);
+
+            PopulateGridWithItems(randomItems);
+        }
         else if (lootboxType == 4)
         {
             int randomAdditionalItem = GetRandomItemFromList(additionalItemIDs2);
@@ -3214,10 +3406,20 @@ public class SteamInventoryManager : MonoBehaviour
             itemIDs2.Remove(randomAdditionalItem);
         }
 
-
         float elapsedTime = 0f;
         Vector3 restingPosition = new Vector3(0, -10000, 0);
-        Vector3 startPosition = new Vector3 (0, -300, 0);
+        Vector3 startPosition;
+        if (lootboxType == 5)
+        {
+
+            startPosition = new Vector3(0, -170, 0);
+
+        }
+        else
+        {
+            startPosition = new Vector3(0, -300, 0);
+
+        }
         Vector3 targetPosition = new Vector3(0, -172.4f, 0);
         while (elapsedTime < 0.25f)
         {
@@ -3229,6 +3431,7 @@ public class SteamInventoryManager : MonoBehaviour
             spinningBar.transform.localPosition = Vector3.Lerp(startPosition, targetPosition, smoothStep);
             yield return null;
         }
+
 
         Debug.Log($"Selected Index: {selectedIndex}");
 
@@ -3280,6 +3483,10 @@ public class SteamInventoryManager : MonoBehaviour
             pumpkin1.Play();
             pumpkin2.Play();
 
+        }
+        else if (lootboxType == 5)
+        {
+            sworddollar.Play();
         }
         else
         {
@@ -3481,7 +3688,6 @@ public class SteamInventoryManager : MonoBehaviour
             Debug.LogError("Exchange failed");
         }
     }
-
     IEnumerator ExchangeForDiamondBriefcase()
     {
         StartCoroutine(ExchangingCooldown());
@@ -3499,6 +3705,74 @@ public class SteamInventoryManager : MonoBehaviour
             return;
         }
         StartCoroutine(ExchangeForDiamondBriefcase());
+    }
+    public void ExchangeForSwordFunction()
+    {
+        if (unstacking)
+        {
+            return;
+        }
+        if (briefcasecooldown)
+        {
+            return;
+        }
+        else
+        {
+            StartCoroutine(BriefcaseCooldown());
+        }
+        Debug.Log("Attempting simple exchange");
+        if (exchanging)
+        {
+            return;
+        }
+        // Use minimal setup for testing
+        List<SteamItemInstanceID_t> inputItems = GetItemIdsFromInventory(new SteamItemDef_t(139), 20);
+        lootboxType = 5;
+        if (inputItems.Count < 20)
+        {
+            Debug.LogError("Not enough items found in inventory for exchange.");
+            return;
+        }
+        uint[] inputQuantities = new uint[inputItems.Count];
+        for (int i = 0; i < inputItems.Count; i++)
+        {
+            inputQuantities[i] = 1;
+        }
+
+        SteamItemDef_t[] outputItems = new SteamItemDef_t[1];
+        outputItems[0] = new SteamItemDef_t(17);
+        uint[] outputQuantity = new uint[1];
+        outputQuantity[0] = 1;
+
+        SteamInventoryResult_t resultHandle;
+        bool success = SteamInventory.ExchangeItems(out resultHandle, outputItems, outputQuantity, (uint)outputItems.Length, inputItems.ToArray(), inputQuantities, (uint)inputItems.Count);
+        StartCoroutine(ExchangingCooldown());
+        if (success)
+        {
+
+            if (resultHandle != SteamInventoryResult_t.Invalid)
+            {
+                Debug.Log("Exchange request successful, waiting for callback...");
+                Debug.Log($"Result handle: {resultHandle}");
+            }
+            else
+            {
+                Debug.LogError("Invalid result handle received from exchange request.");
+            }
+        }
+        else
+        {
+            Debug.LogError("Exchange request failed");
+        }
+    }
+
+    public void ButtonForSword()
+    {
+        if (exchanging)
+        {
+            return;
+        }
+        ExchangeForSwordFunction();
     }
     public void ExchangeForGoldenBriefcaseFunction()
     {
@@ -3817,7 +4091,7 @@ public class SteamInventoryManager : MonoBehaviour
 
         // Setup output items and quantities
         SteamItemDef_t[] outputItems = new SteamItemDef_t[1];
-        outputItems[0] = new SteamItemDef_t(116);
+        outputItems[0] = new SteamItemDef_t(140);
         uint[] outputQuantity = new uint[1];
         outputQuantity[0] = 1;
 
@@ -3895,7 +4169,7 @@ public class SteamInventoryManager : MonoBehaviour
 
         // Setup output items and quantities
         SteamItemDef_t[] outputItems = new SteamItemDef_t[1];
-        outputItems[0] = new SteamItemDef_t(116);
+        outputItems[0] = new SteamItemDef_t(140);
         uint[] outputQuantity = new uint[1];
         outputQuantity[0] = 1;
 

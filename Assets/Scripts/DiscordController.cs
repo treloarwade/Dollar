@@ -41,6 +41,10 @@ public class DiscordController : MonoBehaviour
     public bool isAutumn = false;  // Flag to indicate if it's autumn or not
     public GameObject moneyTree1;   // Reference to the Money Tree GameObject
     public GameObject moneyTree2;   // Reference to the Money Tree GameObject
+    public GameObject moneyTree3;   // Reference to the Money Tree GameObject
+
+    public GameObject moneyTree4;   // Reference to the Money Tree GameObject
+
     private Sprite fallTreeSprite; // Sprite for autumn (fall)
     private Sprite treeSprite;     // Sprite for non-autumn (regular tree)
     public ParticleSystem leaves1;
@@ -51,17 +55,33 @@ public class DiscordController : MonoBehaviour
     public ParticleSystem autumnleaves2;
     public ParticleSystem autumnleaves3;
     public ParticleSystem autumnleaves4;
+    public ParticleSystem ice1;
+    public ParticleSystem ice2;
 
 
 
     void Start()
     {
         LoadClickCount();
+        int LoadLevelWithMinimum(string key, int minValue = 1)
+        {
+            int value = LoadLevel(key);
+            return Mathf.Max(value, minValue);
+        }
+
+        numberofATMs = LoadLevelWithMinimum("numberofATMs");
+        numberofCows = LoadLevelWithMinimum("numberofCows");
+        numberofCarts = LoadLevelWithMinimum("numberofCarts");
+        numberofTrees = LoadLevelWithMinimum("numberofTrees");
+        numberofPots = LoadLevelWithMinimum("numberofPots");
+
+
         atmLevel = LoadLevel("ATM");
         walletLevel = LoadLevel("Wallet");
         cowLevel = LoadLevel("Cow");
         treeLevel = LoadLevel("Tree");
         mineLevel = LoadLevel("Mine");
+        potofgoldLevel = LoadLevel("Potofgold");
         UpdateLevelCostText();
         UpdateMoneyToAdd();
         CheckAndRemoveLockedIcons();
@@ -138,11 +158,117 @@ public class DiscordController : MonoBehaviour
             }
         }
     }
+    private int currentATMCount = 0;       // Tracks how many ATMs are currently enabled
+    private int currentCowCount = 0;       // Tracks how many ATMs are currently enabled
+    private int currentCartCount = 0;       // Tracks how many ATMs are currently enabled
+    private int currentTreeCount = 0;       // Tracks how many ATMs are currently enabled
+    private int currentPotCount = 0;       // Tracks how many ATMs are currently enabled
+
+
+    public void IncreaseATMCount()
+    {
+        if (atmLevel > 0 && currentATMCount < upgradeMenu.atmPhysicsItems.Length && currentATMCount < numberofATMs)
+        {
+            currentATMCount++;
+            upgradeMenu.ToggleATMs(currentATMCount);
+            Debug.Log($"Increased ATM count to {currentATMCount}");
+        }
+    }
+
+    // Method to decrease the number of enabled ATMs
+    public void DecreaseATMCount()
+    {
+        if (atmLevel > 0 && currentATMCount > 0)
+        {
+            currentATMCount--;
+            upgradeMenu.ToggleATMs(currentATMCount);
+            Debug.Log($"Decreased ATM count to {currentATMCount}");
+        }
+    }
+    public void IncreaseCowCount()
+    {
+        if (cowLevel > 0 && currentCowCount < upgradeMenu.cowPhysicsItems.Length && currentCowCount < numberofCows)
+        {
+            currentCowCount++;
+            upgradeMenu.ToggleCows(currentCowCount);
+            Debug.Log($"Increased ATM count to {currentCowCount}");
+        }
+    }
+
+    // Method to decrease the number of enabled ATMs
+    public void DecreaseCowCount()
+    {
+        if (cowLevel > 0 && currentCowCount > 0)
+        {
+            currentCowCount--;
+            upgradeMenu.ToggleCows(currentCowCount);
+            Debug.Log($"Decreased ATM count to {currentCowCount}");
+        }
+    }
+
+
+    // Method to decrease the number of enabled ATMs
+    public void DecreaseTreeCount()
+    {
+        if (treeLevel > 0 && currentTreeCount > 0)
+        {
+            currentTreeCount--;
+            upgradeMenu.ToggleTrees(currentTreeCount);
+            Debug.Log($"Decreased ATM count to {currentTreeCount}");
+        }
+    }
+    public void IncreaseTreeCount()
+    {
+        if (treeLevel > 0 && currentTreeCount < upgradeMenu.treePhysicsItems.Length && currentTreeCount < numberofTrees)
+        {
+            currentTreeCount++;
+            upgradeMenu.ToggleTrees(currentTreeCount);
+            Debug.Log($"Increased ATM count to {currentTreeCount}");
+        }
+    }
+    public void IncreaseCartCount()
+    {
+        if (mineLevel > 0 && currentCartCount < upgradeMenu.cartPhysicsItems.Length && currentCartCount < numberofCarts)
+        {
+            currentCartCount++;
+            upgradeMenu.ToggleCarts(currentCartCount);
+            Debug.Log($"Increased ATM count to {currentCartCount}");
+        }
+    }
+    // Method to decrease the number of enabled ATMs
+    public void DecreaseCartCount()
+    {
+        if (mineLevel > 0 && currentCartCount > 0)
+        {
+            currentCartCount--;
+            upgradeMenu.ToggleCarts(currentCartCount);
+            Debug.Log($"Decreased ATM count to {currentCartCount}");
+        }
+    }
+    public void IncreaseGoldCount()
+    {
+        if (potofgoldLevel > 0 && currentPotCount < upgradeMenu.goldPhysicsItems.Length && currentPotCount < numberofPots)
+        {
+            currentPotCount++;
+            upgradeMenu.TogglePots(currentPotCount);
+            Debug.Log($"Increased ATM count to {currentPotCount}");
+        }
+    }
+    // Method to decrease the number of enabled ATMs
+    public void DecreaseGoldCount()
+    {
+        if (potofgoldLevel > 0 && currentPotCount > 0)
+        {
+            currentPotCount--;
+            upgradeMenu.TogglePots(currentPotCount);
+            Debug.Log($"Decreased ATM count to {currentPotCount}");
+        }
+    }
     public void ToggleATM()
     {
         if (atmLevel > 0)
         {
-            upgradeMenu.ToggleAtmPhysicsItem();
+            IncreaseATMCount();
         }
     }
     public void ToggleCow()
@@ -150,6 +276,13 @@ public class DiscordController : MonoBehaviour
         if (cowLevel > 0)
         {
             upgradeMenu.ToggleCowPhysicsItem();
+        }
+    }
+    public void TogglePotOfGold()
+    {
+        if (potofgoldLevel > 0)
+        {
+            upgradeMenu.TogglePotOfGoldPhysicsItem();
         }
     }
     public void ToggleMinecart()
@@ -182,6 +315,40 @@ public class DiscordController : MonoBehaviour
         if (moneyTree2 != null)
         {
             Image spriteRenderer = moneyTree2.GetComponent<Image>();
+            if (spriteRenderer != null)
+            {
+                // If it's autumn, change to falltree sprite, otherwise use the regular tree sprite
+                spriteRenderer.sprite = isAutumn ? fallTreeSprite : treeSprite;
+            }
+            else
+            {
+                Debug.LogError("No SpriteRenderer found on the moneyTree GameObject.");
+            }
+        }
+        else
+        {
+            Debug.LogError("MoneyTree GameObject is not assigned.");
+        }
+        if (moneyTree3 != null)
+        {
+            SpriteRenderer spriteRenderer = moneyTree3.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                // If it's autumn, change to falltree sprite, otherwise use the regular tree sprite
+                spriteRenderer.sprite = isAutumn ? fallTreeSprite : treeSprite;
+            }
+            else
+            {
+                Debug.LogError("No SpriteRenderer found on the moneyTree GameObject.");
+            }
+        }
+        else
+        {
+            Debug.LogError("MoneyTree GameObject is not assigned.");
+        }
+        if (moneyTree4 != null)
+        {
+            SpriteRenderer spriteRenderer = moneyTree4.GetComponent<SpriteRenderer>();
             if (spriteRenderer != null)
             {
                 // If it's autumn, change to falltree sprite, otherwise use the regular tree sprite
@@ -253,6 +420,9 @@ public class DiscordController : MonoBehaviour
             case 123:
                 OnDiamondDollarClicked(1);
                 break;
+            case 141:
+                OnIceDollarClicked(1);
+                break;
             default:
                 OnDollarClicked(1);
                 break;
@@ -289,6 +459,9 @@ public class DiscordController : MonoBehaviour
             case 123:
                 OnDiamondDollarClicked(0);
                 break;
+            case 141:
+                OnIceDollarClicked(0);
+                break;
             default:
                 OnDollarClicked(0);
                 break;
@@ -310,7 +483,7 @@ public class DiscordController : MonoBehaviour
         {
             counter.text = clickCount.ToString(); // Display with thousands separator
         }
-        if (particletoggleon)
+        if (particletoggleon && clicker.enabled)
         {
             if (goldendollarclicked)
             {
@@ -329,18 +502,34 @@ public class DiscordController : MonoBehaviour
     public int cowLevel = 0; // Starting level
     public int treeLevel = 0; // Starting level
     public int mineLevel = 0; // Starting level
+    public int potofgoldLevel = 0; // Starting level
+
+    public Text atmnumberLevelText;
+    public Text cownumberLevelText;
+    public Text cartnumberLevelText;
+    public Text treenumberLevelText;
+    public Text goldnumberLevelText;
 
     public Text atmLevelText;
     public Text walletLevelText;
     public Text cowLevelText;
     public Text treeLevelText;
     public Text mineLevelText;
+    public Text potofgoldLevelText;
+
+    public Text atmnumberCostText;
+    public Text cownumberCostText;
+    public Text cartnumberCostText;
+    public Text treenumberCostText;
+    public Text goldnumberCostText;
 
     public Text atmCostText;
     public Text walletCostText;
     public Text cowCostText;
     public Text treeCostText;
     public Text mineCostText;
+    public Text potofgoldCostText;
+
 
     public BigDouble moneyToAdd = 0; // Adjust this value as needed
     public BigDouble moneyFromATM = 0;
@@ -348,6 +537,8 @@ public class DiscordController : MonoBehaviour
     public BigDouble moneyFromCow = 0;
     public BigDouble moneyFromTree = 0;
     public BigDouble moneyFromMine = 0;
+    public BigDouble moneyFromPotofgold = 0;
+
 
     private IEnumerator AddMoneyOverTime()
     {
@@ -376,6 +567,8 @@ public class DiscordController : MonoBehaviour
     public GameObject cowLockedIcon;    // Assign the Cow locked icon in the Inspector
     public GameObject treeLockedIcon;    // Assign the Cow locked icon in the Inspector
     public GameObject mineLockedIcon;    // Assign the Cow locked icon in the Inspector
+    public GameObject potofgoldLockedIcon;    // Assign the Cow locked icon in the Inspector
+
 
 
     // Call this function to check and remove locked icons based on level
@@ -404,7 +597,18 @@ public class DiscordController : MonoBehaviour
         {
             mineLockedIcon.SetActive(false);  // Disable Cow locked icon if level is greater than 0
         }
+        if (potofgoldLevel > 0 && potofgoldLockedIcon != null)
+        {
+            potofgoldLockedIcon.SetActive(false);  // Disable Cow locked icon if level is greater than 0
+        }
     }
+    public int numberofATMs;
+    public int numberofCows;
+    public int numberofCarts;
+    public int numberofTrees;
+    public int numberofPots;
+
+
     private void UpdateMoneyToAdd()
     {
         moneyFromATM = CalculateMoney(atmLevel);
@@ -412,10 +616,21 @@ public class DiscordController : MonoBehaviour
         moneyFromCow = 8 * CalculateMoney(cowLevel);
         moneyFromTree = 20 * CalculateMoney(treeLevel);
         moneyFromMine = 38 * CalculateMoney(mineLevel);
-        moneyToAdd = moneyFromATM + moneyFromWallet + moneyFromCow + moneyFromTree + moneyFromMine;
+        moneyFromPotofgold = 59 * CalculateMoney(potofgoldLevel);
+        moneyToAdd = (numberofATMs * moneyFromATM) + (moneyFromWallet * numberofATMs) + (numberofCows * moneyFromCow) + (numberofTrees * moneyFromTree) + (numberofCarts * moneyFromMine) + (numberofPots * moneyFromPotofgold);
     }
     public void UpdateLevelCostText()
     {
+        BigDouble cost11 = 1000 * GetLevelUpCost(numberofATMs + 1);
+        atmnumberCostText.text = FormatCostText(cost11);
+        BigDouble cost12 = 300000 * GetLevelUpCost(numberofCows + 1);
+        cownumberCostText.text = FormatCostText(cost12);
+        BigDouble cost13 = 50000000 * GetLevelUpCost(numberofCarts + 1);
+        cartnumberCostText.text = FormatCostText(cost13);
+        BigDouble cost14 = 4000000 * GetLevelUpCost(numberofTrees + 1);
+        treenumberCostText.text = FormatCostText(cost14);
+        BigDouble cost15 = 600000000 * GetLevelUpCost(numberofPots + 1);
+        goldnumberCostText.text = FormatCostText(cost15);
         BigDouble cost1 = 10 * GetLevelUpCost(atmLevel + 1);
         atmCostText.text = FormatCostText(cost1);
         BigDouble cost2 = 3000 * GetLevelUpCost(cowLevel + 1);
@@ -426,28 +641,41 @@ public class DiscordController : MonoBehaviour
         treeCostText.text = FormatCostText(cost4);
         BigDouble cost5 = 500000 * GetLevelUpCost(mineLevel + 1);
         mineCostText.text = FormatCostText(cost5);
+        BigDouble cost6 = 6000000 * GetLevelUpCost(potofgoldLevel + 1);
+        potofgoldCostText.text = FormatCostText(cost6);
         // For ATM Level text
-        atmLevelText.text = atmLevel == 0 ? "Unlock" : "Level: " + atmLevel;
+        atmnumberLevelText.text = FormatNumberOrUnlockText(atmLevel, numberofATMs, "ATMs");
+        cownumberLevelText.text = FormatNumberOrUnlockText(cowLevel, numberofCows, "Cows");
+        cartnumberLevelText.text = FormatNumberOrUnlockText(mineLevel, numberofCarts, "Carts");
+        treenumberLevelText.text = FormatNumberOrUnlockText(treeLevel, numberofTrees, "Trees");
+        goldnumberLevelText.text = FormatNumberOrUnlockText(potofgoldLevel, numberofPots, "Pots");
 
-        // For Wallet Level text
-        walletLevelText.text = walletLevel == 0 ? "Unlock" : "Level: " + walletLevel;
+        // Update level texts
+        atmLevelText.text = FormatLevelText(atmLevel);
+        walletLevelText.text = FormatLevelText(walletLevel);
+        cowLevelText.text = FormatLevelText(cowLevel);
+        treeLevelText.text = FormatLevelText(treeLevel);
+        mineLevelText.text = FormatLevelText(mineLevel);
+        potofgoldLevelText.text = FormatLevelText(potofgoldLevel);
+    }
+    string FormatNumberOrUnlockText(int level, int count, string itemName)
+    {
+        return level == 0 ? "Unlock" : $"{itemName}: {count}";
+    }
 
-        // For Cow Level text
-        cowLevelText.text = cowLevel == 0 ? "Unlock" : "Level: " + cowLevel;
-
-        treeLevelText.text = treeLevel == 0 ? "Unlock" : "Level: " + treeLevel;
-        mineLevelText.text = mineLevel == 0 ? "Unlock" : "Level: " + mineLevel;
-
+    string FormatLevelText(int level)
+    {
+        return level == 0 ? "Unlock" : $"Level: {level}";
     }
     private string FormatCostText(BigDouble cost)
     {
-        if (cost >= 1_000_000_000_000_000)
+        if (cost >= 10_000_000_000_000)
         {
-            return "Cost: " + (cost / 1_000_000f).ToString("F0") + " million";
+            return (cost / 1_000_000_000f).ToString("F0") + " billion";
         }
         else
         {
-            return "Cost: " + cost.ToString();
+            return cost.ToString();
         }
     }
     public void ResetLevels()
@@ -457,17 +685,31 @@ public class DiscordController : MonoBehaviour
         cowLevel = 0;
         treeLevel = 0;
         mineLevel = 0;
+        potofgoldLevel = 0;
+        numberofATMs = 1;
+        numberofCows = 1;
+        numberofCarts = 1;
+        numberofTrees = 1;
+        numberofPots = 1;
         atmLockedIcon.SetActive(true);  // Disable ATM locked icon if level is greater than 0
         walletLockedIcon.SetActive(true);  // Disable Wallet locked icon if level is greater than 0
         cowLockedIcon.SetActive(true);  // Disable Cow locked icon if level is greater than 0
         treeLockedIcon.SetActive(true);
         mineLockedIcon.SetActive(true);
+        potofgoldLockedIcon.SetActive(true);
         UpdateMoneyToAdd();
+        SaveLevel("numberofATMs", numberofATMs);
         SaveLevel("ATM", atmLevel);
         SaveLevel("Wallet", walletLevel);
+        SaveLevel("numberofCows", numberofCows);
         SaveLevel("Cow", cowLevel);
         SaveLevel("Tree", treeLevel);
+        SaveLevel("numberofCarts", numberofCarts);
         SaveLevel("Mine", mineLevel);
+        SaveLevel("Potofgold", potofgoldLevel);
+        SaveLevel("numberofTrees", numberofTrees);
+        SaveLevel("numberofPots", numberofPots);
+
         UpdateLevelCostText();
     }
     private BigDouble CalculateMoney(int level)
@@ -553,6 +795,54 @@ public class DiscordController : MonoBehaviour
     }
 
     // Example usage for specific levels
+    public void LevelUpNumberOfATM()
+    {
+        if (atmLevel == 0)
+        {
+            LevelUpATM();
+            return;
+        }
+        LevelUp(ref numberofATMs, "numberofATMs", 1000, atmnumberLevelText, atmnumberCostText);
+    }
+    public void LevelUpNumberOfCow()
+    {
+        if (cowLevel == 0)
+        {
+            LevelUpCow();
+            return;
+        }
+        LevelUp(ref numberofCows, "numberofCows", 300000, cownumberLevelText, cownumberCostText);
+    }
+    public void LevelUpNumberOfCart()
+    {
+        if (mineLevel == 0)
+        {
+            LevelUpMine();
+            return;
+        }
+        LevelUp(ref numberofCarts, "numberofCarts", 50000000, cartnumberLevelText, cartnumberCostText);
+    }
+    public void LevelUpNumberOfTree()
+    {
+        if (treeLevel == 0)
+        {
+            LevelUpTree();
+            return;
+        }
+        LevelUp(ref numberofTrees, "numberofTrees", 4000000, treenumberLevelText, treenumberCostText);
+
+    }
+    public void LevelUpNumberOfPots()
+    {
+        if (potofgoldLevel == 0)
+        {
+            LevelUpPotOfGold();
+            return;
+        }
+        LevelUp(ref numberofPots, "numberofPots", 600000000, goldnumberLevelText, goldnumberCostText);
+
+    }
+
     public void LevelUpATM()
     {
         LevelUp(ref atmLevel, "ATM", 10, atmLevelText, atmCostText);
@@ -574,6 +864,10 @@ public class DiscordController : MonoBehaviour
     public void LevelUpMine()
     {
         LevelUp(ref mineLevel, "Mine", 500000, mineLevelText, mineCostText);
+    }
+    public void LevelUpPotOfGold()
+    {
+        LevelUp(ref potofgoldLevel, "Potofgold", 6000000, potofgoldLevelText, potofgoldCostText);
     }
 
     private BigDouble GetLevelUpCost(BigDouble targetLevel)
@@ -664,7 +958,7 @@ public class DiscordController : MonoBehaviour
         {
             counter.text = clickCount.ToString(); // Display with thousands separator
         }
-        if (particletoggleon)
+        if (particletoggleon && clicker.enabled)
         {
             diamond1.Play();
             diamond2.Play();
@@ -687,12 +981,34 @@ public class DiscordController : MonoBehaviour
         {
             counter.text = clickCount.ToString(); // Display with thousands separator
         }
-        if (particletoggleon)
+        if (particletoggleon && clicker.enabled)
         {
             PlayParticleWithChance(fish1, 0.5f);
             PlayParticleWithChance(fish2, 0.5f);
             PlayParticleWithChance(fish3, 0.5f);
             PlayParticleWithChance(frutigerphone, 0.8f);
+        }
+
+    }
+    public void OnIceDollarClicked(int incrementAmount)
+    {
+        clickCount += incrementAmount;
+
+        SaveClickCount();
+        // Update the counter text
+        // Using "F0" format to display the number as a long number without decimal places
+        if (clickCount >= 1_000_000_000_000_000)
+        {
+            counter.text = (clickCount / 1_000_000f).ToString("F0") + " million";
+        }
+        else
+        {
+            counter.text = clickCount.ToString(); // Display with thousands separator
+        }
+        if (particletoggleon && clicker.enabled)
+        {
+            PlayParticleWithChance(ice1, 0.2f);
+            PlayParticleWithChance(ice2, 0.2f);
         }
 
     }
